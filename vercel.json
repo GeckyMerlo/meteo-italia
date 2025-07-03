@@ -11,8 +11,5 @@
       "maxDuration": 10
     }
   },
-  "regions": ["iad1"],
-  "projectSettings": {
-    "nodeVersion": "18.x"
-  }
+  "regions": ["iad1"]
 }
