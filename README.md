@@ -1,4 +1,4 @@
-# Meteo Italia 🌤️ 
+# Meteo Italia 🌤️
 
 Un'applicazione Next.js per le previsioni del tempo in Italia con design responsive e supporto per tema scuro/chiaro.
 
