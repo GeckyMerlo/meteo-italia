@@ -420,7 +420,7 @@ const HomePage = () => {
           },
           {
             provider: 'MeteoAM',
-            providerLogo: '/images/AMLogo.gif',
+            providerLogo: '⛅',
             city: selectedCity,
             day: selectedDay,
             status: 'error',
@@ -453,7 +453,9 @@ const HomePage = () => {
       <div className="container mx-auto px-4 py-6">
         <header className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
-            <div className="text-7xl mr-4">🌤️</div>
+            <div className="text-7xl mr-4">
+              <img src="/images/logo.png" alt="Logo" className="h-12" />
+            </div>
             <div>
               <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 dark:from-blue-600 dark:to-purple-600 bg-clip-text text-transparent mb-2">
                 Meteo Italia
@@ -587,7 +589,7 @@ const HomePage = () => {
             <div className="space-y-6">
               <div className="flex justify-center items-center space-x-3 text-base font-medium">
                 <span className="text-2xl">🌟</span>
-                <span>Dati a scopo dimostrativo. Non affiliato con i provider meteorologici ufficiali.</span>
+                <span>Non affiliato con i provider meteorologici ufficiali.</span>
               </div>
               <div className="flex justify-center items-center space-x-6 text-sm">
                 <span className="flex items-center space-x-2 bg-orange-100 dark:bg-gray-800 px-3 py-2 rounded-full">
@@ -605,7 +607,7 @@ const HomePage = () => {
               </div>
               <div className="pt-6 border-t-2 border-amber-300 dark:border-gray-700 max-w-md mx-auto">
                 <p className="text-sm text-amber-500 dark:text-gray-500 font-medium">
-                  © 2025 Meteo Italia - Un progetto dimostrativo per confrontare previsioni meteorologiche
+                  © 2025 Meteo Italia - Progetto dimostrativo per confrontare previsioni meteorologiche
                 </p>
               </div>
             </div>
