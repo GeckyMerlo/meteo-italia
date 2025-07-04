@@ -318,7 +318,7 @@ const HomePage = () => {
               
               const weatherItem: WeatherData = {
                 provider: 'MeteoAM',
-                providerLogo: '⛅',
+                providerLogo: '/images/AMLogo.gif',
                 city: selectedCity,
                 day: selectedDay,
                 maxTemp: maxTemp,
@@ -336,7 +336,7 @@ const HomePage = () => {
               // Dati non disponibili o errore
               weatherData.push({
                 provider: 'MeteoAM',
-                providerLogo: '⛅',
+                providerLogo: '/images/AMLogo.gif',
                 city: selectedCity,
                 day: selectedDay,
                 status: 'unavailable',
@@ -349,7 +349,7 @@ const HomePage = () => {
             const errorData = await meteoAMResponse.json().catch(() => ({}));
             weatherData.push({
               provider: 'MeteoAM',
-              providerLogo: '⛅',
+              providerLogo: '/images/AMLogo.gif',
               city: selectedCity,
               day: selectedDay,
               status: 'error',
@@ -361,7 +361,7 @@ const HomePage = () => {
           // Errore nella chiamata API
           weatherData.push({
             provider: 'MeteoAM',
-            providerLogo: '⛅',
+            providerLogo: '/images/AMLogo.gif',
             city: selectedCity,
             day: selectedDay,
             status: 'error',
@@ -370,9 +370,8 @@ const HomePage = () => {
           });
         }
         
-        // Aggiungi altri provider con dati mock per ora
+        // Aggiungi altri provider con dati mock per ora (escluso MeteoAM che è già implementato)
         const mockProviders = [
-          { name: 'MeteoAM', logo: '/images/Areonautica.jpg', color: 'orange' },
           { name: 'Meteo.it', logo: '☀️', color: 'purple' }
         ];
         
@@ -403,7 +402,7 @@ const HomePage = () => {
         const mockData: WeatherData[] = [
           {
             provider: '3B Meteo',
-            providerLogo: '🌤️',
+            providerLogo: '/images/3BMeteoLogo.png',
             city: selectedCity,
             day: selectedDay,
             status: 'error',
@@ -412,7 +411,7 @@ const HomePage = () => {
           },
           {
             provider: 'Il Meteo',
-            providerLogo: '🌦️',
+            providerLogo: '/images/ilMeteoLogo.png',
             city: selectedCity,
             day: selectedDay,
             status: 'error',
@@ -421,7 +420,7 @@ const HomePage = () => {
           },
           {
             provider: 'MeteoAM',
-            providerLogo: '⛅',
+            providerLogo: '/images/AMLogo.gif',
             city: selectedCity,
             day: selectedDay,
             status: 'error',
