@@ -192,7 +192,7 @@ const HomePage = () => {
             if (ilMeteoData.provider === 'ilmeteo' && ilMeteoData.day !== undefined) {
               weatherData.push({
                 provider: 'Il Meteo',
-                providerLogo: '🌦️',
+                providerLogo: '/images/ilMeteoLogo.png', 
                 city: selectedCity,
                 day: selectedDay,
                 maxTemp: ilMeteoData.maxTemp || ilMeteoData.max?.toString() || 'N/A',
@@ -211,7 +211,7 @@ const HomePage = () => {
               if (requestedDay) {
                 weatherData.push({
                   provider: 'Il Meteo',
-                  providerLogo: '🌦️',
+                  providerLogo: '/images/ilMeteoLogo.png',
                   city: selectedCity,
                   day: selectedDay,
                   maxTemp: requestedDay.max?.toString() || 'N/A',
@@ -228,7 +228,7 @@ const HomePage = () => {
                 // Giorno non trovato nei dati disponibili
                 weatherData.push({
                   provider: 'Il Meteo',
-                  providerLogo: '🌦️',
+                  providerLogo: '/images/ilMeteoLogo.png',
                   city: selectedCity,
                   day: selectedDay,
                   status: 'unavailable',
@@ -240,7 +240,7 @@ const HomePage = () => {
               // Formato dati non riconosciuto
               weatherData.push({
                 provider: 'Il Meteo',
-                providerLogo: '🌦️',
+                providerLogo: '/images/ilMeteoLogo.png',
                 city: selectedCity,
                 day: selectedDay,
                 status: 'error',
@@ -253,7 +253,7 @@ const HomePage = () => {
             const errorData = await ilMeteoResponse.json().catch(() => ({}));
             weatherData.push({
               provider: 'Il Meteo',
-              providerLogo: '🌦️',
+              providerLogo: '/images/ilMeteoLogo.png',
               city: selectedCity,
               day: selectedDay,
               status: 'error',
@@ -265,7 +265,7 @@ const HomePage = () => {
           // Errore nella chiamata API
           weatherData.push({
             provider: 'Il Meteo',
-            providerLogo: '🌦️',
+            providerLogo: '/images/ilMeteoLogo.png',
             city: selectedCity,
             day: selectedDay,
             status: 'error',
@@ -276,7 +276,7 @@ const HomePage = () => {
         
         // Aggiungi altri provider con dati mock per ora
         const mockProviders = [
-          { name: 'MeteoAM', logo: '⛅', color: 'orange' },
+          { name: 'MeteoAM', logo: '/images/AMLogo.gif', color: 'orange' },
           { name: 'Meteo.it', logo: '☀️', color: 'purple' }
         ];
         
