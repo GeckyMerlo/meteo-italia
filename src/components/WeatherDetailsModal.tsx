@@ -48,58 +48,50 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
     setError(null);
     
     try {
+      // Converti il giorno selezionato nel formato corretto per l'API oraria
+      let dayParam: string;
+      if (day === 'oggi') {
+        dayParam = '0';
+      } else if (day === 'domani') {
+        dayParam = '1';
+      } else if (day.startsWith('+') && day.endsWith('giorni')) {
+        // Estrai il numero da "+2giorni", "+3giorni", etc.
+        const daysAhead = parseInt(day.replace('+', '').replace('giorni', ''));
+        dayParam = daysAhead.toString();
+      } else {
+        // Fallback: prova a usare il valore direttamente
+        dayParam = day;
+      }
+      
       // Carica i dati orari reali dall'API
-      const response = await fetch(`/api/meteo/orari?city=${encodeURIComponent(city)}&day=${day}`);
+      const response = await fetch(`/api/3bMeteo/orari?city=${encodeURIComponent(city)}&day=${dayParam}`);
       const data = await response.json();
       
-      if (response.ok && Array.isArray(data) && data.length > 0) {
-        // L'API restituisce già i dati nel formato corretto
-        setHourlyData(data);
-        setError(null);
+      if (response.ok && Array.isArray(data)) {
+        if (data.length > 0) {
+          // L'API restituisce dati reali
+          setHourlyData(data);
+          setError(null);
+        } else {
+          // L'API restituisce un array vuoto (nessun dato reale disponibile)
+          setHourlyData([]);
+          setError('Nessun dato orario disponibile per questo giorno su 3B Meteo.');
+        }
       } else {
-        // Fallback ai dati mock se non ci sono dati orari
-        generateMockHourlyData();
-        setError('Dati orari non disponibili, showing mock data.');
+        // Errore nell'API
+        setHourlyData([]);
+        setError('Errore nel caricamento dei dati orari.');
       }
     } catch (err) {
       console.error('[Modal] Errore nel caricamento dati orari:', err);
-      // Fallback ai dati mock in caso di errore di rete
-      generateMockHourlyData();
-      setError(`Errore di rete: ${err instanceof Error ? err.message : 'Errore sconosciuto'}. Showing mock data.`);
+      // Nessun fallback ai dati mock, mostra solo errore
+      setHourlyData([]);
+      setError(`Errore di rete: ${err instanceof Error ? err.message : 'Errore sconosciuto'}.`);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateMockHourlyData = () => {
-    const mockData: HourlyWeather[] = [];
-    for (let i = 0; i < 24; i += 3) {
-      const baseTemp = 15 + Math.floor(Math.random() * 15);
-      
-      // Simula variazione temperatura durante il giorno
-      let tempVariation = 0;
-      if (i >= 6 && i <= 18) { // Giorno
-        tempVariation = Math.floor(Math.random() * 8);
-      } else { // Notte
-        tempVariation = -Math.floor(Math.random() * 5);
-      }
-      
-      const temperature = baseTemp + tempVariation;
-      
-      mockData.push({
-        time: `${i.toString().padStart(2, '0')}:00`,
-        condition: ['sereno', 'poco nuvoloso', 'nuvoloso', 'coperto', 'piovoso'][Math.floor(Math.random() * 5)],
-        temperature: `${temperature}°`,
-        precipitation: `${Math.floor(Math.random() * 30)}%`,
-        wind: `${5 + Math.floor(Math.random() * 20)} km/h`,
-        humidity: `${40 + Math.floor(Math.random() * 40)}%`,
-        feelsLike: `${temperature + Math.floor(Math.random() * 6) - 3}°`,
-        icon: ''
-      });
-    }
-    
-    setHourlyData(mockData);
-  };
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -235,13 +227,24 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
           <div className="max-w-none">
             <div className="flex items-center justify-between mb-6 md:mb-8">
               <h3 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
-                Previsioni Orarie Simulate
+                {hourlyData.length === 4 ? 'Previsioni per Fasce Orarie' : 
+                 hourlyData.length === 24 ? 'Previsioni Orarie Complete' : 
+                 'Previsioni Orarie'}
               </h3>
               <div className="flex items-center space-x-4">
                 {loading && (
                   <div className="flex items-center text-blue-600 dark:text-blue-400">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
                     <span className="text-sm">Caricamento...</span>
+                  </div>
+                )}
+                {/* Show info about data type */}
+                {!loading && hourlyData.length > 0 && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {hourlyData.length === 4 ? 
+                      '4 fasce orarie (Notte, Mattina, Pomeriggio, Sera)' :
+                      `${hourlyData.length} ore disponibili`
+                    }
                   </div>
                 )}
                 <div className="hidden md:block text-sm text-gray-500 dark:text-gray-400">
@@ -259,8 +262,32 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
               </div>
             )}
             
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <div className="flex items-center">
+                  <div className="text-orange-700 dark:text-orange-300 font-medium">
+                    ⚠️ {error}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* No Data Message */}
+            {!loading && !error && hourlyData.length === 0 && (
+              <div className="mb-6 p-8 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
+                <div className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+                  📊 Nessun dato orario disponibile
+                </div>
+                <div className="text-gray-400 dark:text-gray-500 text-sm">
+                  I dati orari per questo giorno non sono disponibili su 3B Meteo
+                </div>
+              </div>
+            )}
+            
             {/* Desktop Table */}
-            <div className="hidden lg:block overflow-x-auto">
+            {!loading && !error && hourlyData.length > 0 && (
+              <div className="hidden lg:block overflow-x-auto">
               <table className="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-700">
@@ -294,7 +321,17 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                       className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
                     >
                       <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        {hour.time}
+                        <div className="flex items-center space-x-2">
+                          <span>{hour.time}</span>
+                          {hourlyData.length === 4 && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {hour.time === '03:00' && '(Notte)'}
+                              {hour.time === '09:00' && '(Mattina)'}
+                              {hour.time === '15:00' && '(Pomeriggio)'}
+                              {hour.time === '21:00' && '(Sera)'}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center space-x-3">
@@ -346,8 +383,10 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                 </tbody>
               </table>
             </div>
+            )}
 
             {/* Tablet Grid View */}
+            {!loading && !error && hourlyData.length > 0 && (
             <div className="hidden md:grid lg:hidden grid-cols-1 gap-4">
               {hourlyData.map((hour, index) => (
                 <div 
@@ -387,8 +426,10 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                 </div>
               ))}
             </div>
+            )}
 
             {/* Mobile Cards */}
+            {!loading && !error && hourlyData.length > 0 && (
             <div className="md:hidden space-y-4">
               {hourlyData.map((hour, index) => (
                 <div 
@@ -432,6 +473,7 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                 </div>
               ))}
             </div>
+            )}
           </div>
         </div>
       </div>

@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
     
     const hourlyData: HourlyWeather[] = [];
     
+    // Prima prova il parsing orario dettagliato
     uniqueRows.forEach((row: Element, index: number) => {
       try {
         // Estrai l'ora - proviamo selettori multipli per trovare l'ora
@@ -164,6 +165,141 @@ export async function GET(request: NextRequest) {
         console.error(`Error parsing row ${index + 1}:`, error);
       }
     });
+    
+    // Se non troviamo dati orari specifici, prova a cercare fasce orarie
+    if (hourlyData.length === 0) {
+      console.log('No hourly data found, trying to parse time periods...');
+      
+      // Cerca fasce orarie come "Notte H0-6", "Mattina H6-12", etc.
+      const timePeriodsRows = document.querySelectorAll('.row-table-xs');
+      
+      console.log(`Found ${timePeriodsRows.length} time period rows`);
+      
+      timePeriodsRows.forEach((row: Element, index: number) => {
+        try {
+          const rowText = row.textContent?.trim() || '';
+          
+          // Cerca pattern per fasce orarie
+          let timeRange = '';
+          let displayTime = '';
+          
+          if (rowText.includes('Notte') && rowText.includes('H0-6')) {
+            timeRange = 'H0-6';
+            displayTime = '03:00'; // Ora rappresentativa per la notte
+          } else if (rowText.includes('Mattina') && rowText.includes('H6-12')) {
+            timeRange = 'H6-12';
+            displayTime = '09:00'; // Ora rappresentativa per la mattina
+          } else if (rowText.includes('Pomeriggio') && rowText.includes('H12-18')) {
+            timeRange = 'H12-18';
+            displayTime = '15:00'; // Ora rappresentativa per il pomeriggio
+          } else if (rowText.includes('Sera') && rowText.includes('H18-24')) {
+            timeRange = 'H18-24';
+            displayTime = '21:00'; // Ora rappresentativa per la sera
+          }
+          
+          if (timeRange && displayTime) {
+            // Estrai la condizione dall'attributo alt dell'immagine
+            const conditionImg = row.querySelector('img[alt]');
+            let condition = conditionImg?.getAttribute('alt') || '';
+            
+            // Se non troviamo l'alt dell'immagine, prova a estrarre dal testo
+            if (!condition || condition === 'N/A') {
+              // Cerca pattern di condizioni nel testo
+              const conditionPatterns = [
+                'pioggia e schiarite',
+                'nuvoloso',
+                'possibili temporali',
+                'temporale',
+                'sereno',
+                'poco nuvoloso',
+                'molto nuvoloso',
+                'coperto',
+                'nebbia',
+                'foschia',
+                'piovoso',
+                'neve',
+                'grandine'
+              ];
+              
+              for (const pattern of conditionPatterns) {
+                if (rowText.toLowerCase().includes(pattern.toLowerCase())) {
+                  condition = pattern;
+                  break;
+                }
+              }
+              
+              // Se ancora non troviamo nulla, prova a estrarre dalla descrizione
+              if (!condition || condition === 'N/A') {
+                const lines = rowText.split('\n').map(line => line.trim()).filter(line => line);
+                for (const line of lines) {
+                  if (line.includes('Nubi') || line.includes('Molto nuvoloso') || line.includes('Nuvoloso') || 
+                      line.includes('pioggia') || line.includes('temporali') || line.includes('sereno')) {
+                    condition = line.substring(0, 50); // Prendi i primi 50 caratteri
+                    break;
+                  }
+                }
+              }
+            }
+            
+            // Estrai l'icona dall'attributo src dell'immagine
+            const iconImg = row.querySelector('img[src]');
+            const icon = iconImg?.getAttribute('src') || '';
+            
+            // Estrai la temperatura - proviamo selettori multipli
+            let tempElement = row.querySelector('.switchcelsius.switch-te.active');
+            if (!tempElement) {
+              tempElement = row.querySelector('.switchcelsius');
+            }
+            if (!tempElement) {
+              tempElement = row.querySelector('[class*="switchcelsius"]');
+            }
+            const temperature = tempElement?.textContent?.trim() || '';
+            
+            // Per le fasce orarie, proviamo a estrarre alcuni dati dal testo
+            let precipitation = 'N/A';
+            let wind = 'N/A';
+            let humidity = 'N/A';
+            
+            // Estrai precipitazioni dal testo
+            const precipMatch = rowText.match(/prec\.\s*:\s*([^venti]+)/i);
+            if (precipMatch) {
+              precipitation = precipMatch[1].trim();
+            }
+            
+            // Estrai vento dal testo
+            const windMatch = rowText.match(/venti\s*:\s*([^umidità]+)/i);
+            if (windMatch) {
+              wind = windMatch[1].trim();
+            }
+            
+            // Estrai umidità dal testo
+            const humidityMatch = rowText.match(/umidità\s*:\s*(\d+%)/i);
+            if (humidityMatch) {
+              humidity = humidityMatch[1];
+            }
+            
+            const feelsLike = temperature || 'N/A';
+            
+            if (condition || temperature) {
+              hourlyData.push({
+                time: displayTime,
+                condition: condition || 'N/A',
+                temperature: temperature || 'N/A',
+                precipitation,
+                wind,
+                humidity,
+                feelsLike,
+                icon: icon || ''
+              });
+              
+              console.log(`Time period ${index + 1}: ${displayTime} (${timeRange}) - ${condition} - ${temperature}`);
+            }
+          }
+        } catch (error) {
+          console.error(`Error parsing time period row ${index + 1}:`, error);
+        }
+      });
+    }
     
     console.log(`Successfully extracted ${hourlyData.length} hourly entries`);
     

@@ -38,6 +38,11 @@ interface ApiResponse {
   max?: number | null;
   days?: ApiDayData[];
   error?: string;
+  weatherDescription?: string;
+  maxTemp?: string;
+  minTemp?: string;
+  wind?: string;
+  humidity?: string;
 }
 
 const HomePage = () => {
@@ -64,6 +69,12 @@ const HomePage = () => {
           const tomorrow = new Date(today);
           tomorrow.setDate(today.getDate() + 1);
           dayNumber = tomorrow.getDate();
+        } else if (selectedDay.startsWith('+') && selectedDay.endsWith('giorni')) {
+          // Estrai il numero da "+2giorni", "+3giorni", etc.
+          const daysAhead = parseInt(selectedDay.replace('+', '').replace('giorni', ''));
+          const targetDate = new Date(today);
+          targetDate.setDate(today.getDate() + daysAhead);
+          dayNumber = targetDate.getDate();
         } else {
           dayNumber = parseInt(selectedDay);
         }
@@ -73,24 +84,24 @@ const HomePage = () => {
         
         // Chiama l'API reale per 3B Meteo
         try {
-          const response = await fetch(`/api/meteo?city=${encodeURIComponent(selectedCity.toLowerCase())}&day=${dayNumber}`);
+          const response = await fetch(`/api/3bMeteo?city=${encodeURIComponent(selectedCity.toLowerCase())}&day=${dayNumber}`);
           
           if (response.ok) {
             const data: ApiResponse = await response.json();
             
             // Controlla se abbiamo ricevuto dati per il giorno specifico
-            if (data.provider === '3bmeteo' && data.day) {
+            if (data.provider === '3bmeteo' && data.day !== undefined) {
               weatherData.push({
                 provider: '3B Meteo',
                 providerLogo: '🌤️',
                 city: selectedCity,
                 day: selectedDay,
-                maxTemp: data.max?.toString() || 'N/A',
-                minTemp: data.min?.toString() || 'N/A',
+                maxTemp: data.maxTemp || data.max?.toString() || 'N/A',
+                minTemp: data.minTemp || data.min?.toString() || 'N/A',
                 weatherIconUrl: data.icon || '',
-                weatherDescription: 'Previsioni da 3B Meteo',
-                wind: 'N/A',
-                humidity: 'N/A',
+                weatherDescription: data.weatherDescription || 'Previsioni da 3B Meteo',
+                wind: data.wind || 'N/A',
+                humidity: data.humidity || 'N/A',
                 reliability: 'alta',
                 status: 'success',
                 lastUpdated: new Date().toISOString()
