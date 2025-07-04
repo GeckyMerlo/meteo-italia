@@ -21,17 +21,6 @@ interface WeatherData {
   lastUpdated: string;
 }
 
-interface HourlyWeather {
-  hour: string;
-  condition: string;
-  temperature: number;
-  precipitation: number;
-  wind: string;
-  humidity: number;
-  feelsLike: number;
-  icon: string;
-}
-
 interface WeatherCardProps {
   weatherData: WeatherData;
   loading?: boolean;
@@ -55,45 +44,6 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ weatherData, loading }) => {
     message,
     lastUpdated
   } = weatherData;
-
-  // Generate deterministic hourly data based on provider and day
-  const generateHourlyData = (): HourlyWeather[] => {
-    const hours = [];
-    const baseTemp = maxTemp ? parseInt(maxTemp) : 20;
-    const minTempNum = minTemp ? parseInt(minTemp) : baseTemp - 8;
-    
-    // Create a simple hash for deterministic randomness
-    const hash = (provider + city + day).split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-    
-    const conditions = [
-      'sereno', 'poco nuvoloso', 'nuvoloso', 'coperto', 
-      'pioggia leggera', 'pioggia', 'temporale', 'neve'
-    ];
-    
-    for (let i = 0; i < 24; i++) {
-      const hourHash = Math.abs(hash + i * 7);
-      
-      // Temperature variation throughout the day
-      const tempVariation = Math.sin((i - 6) * Math.PI / 12) * (baseTemp - minTempNum) / 2;
-      const temperature = Math.round(minTempNum + (baseTemp - minTempNum) / 2 + tempVariation);
-      
-      hours.push({
-        hour: `${i.toString().padStart(2, '0')}:00`,
-        condition: conditions[hourHash % conditions.length],
-        temperature,
-        precipitation: hourHash % 100,
-        wind: `${5 + (hourHash % 15)} km/h`,
-        humidity: 40 + (hourHash % 40),
-        feelsLike: temperature + (-3 + (hourHash % 7)),
-        icon: conditions[hourHash % conditions.length]
-      });
-    }
-    
-    return hours;
-  };
 
   const handleCardClick = () => {
     if (status === 'success') {
@@ -346,7 +296,6 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ weatherData, loading }) => {
         provider={provider}
         city={city}
         day={day}
-        hourlyData={generateHourlyData()}
       />
     </div>
   );

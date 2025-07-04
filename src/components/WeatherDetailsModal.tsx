@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Sun, Cloud, CloudRain, Wind, Droplets, Thermometer, Eye, CloudSnow, Zap } from 'lucide-react';
 
 interface HourlyWeather {
-  hour: string;
+  time: string;
   condition: string;
-  temperature: number;
-  precipitation: number;
+  temperature: string;
+  precipitation: string;
   wind: string;
-  humidity: number;
-  feelsLike: number;
+  humidity: string;
+  feelsLike: string;
   icon: string;
 }
 
@@ -21,7 +21,7 @@ interface WeatherDetailsModalProps {
   provider: string;
   city: string;
   day: string;
-  hourlyData: HourlyWeather[];
+  hourlyData?: HourlyWeather[]; // Reso opzionale
 }
 
 const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
@@ -30,8 +30,76 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
   provider,
   city,
   day,
-  hourlyData
+  hourlyData: propHourlyData
 }) => {
+  const [hourlyData, setHourlyData] = useState<HourlyWeather[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Generate mock hourly data when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadHourlyData();
+    }
+  }, [isOpen, provider, city, day]);
+
+  const loadHourlyData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Carica i dati orari reali dall'API
+      const response = await fetch(`/api/meteo/orari?city=${encodeURIComponent(city)}&day=${day}`);
+      const data = await response.json();
+      
+      if (response.ok && Array.isArray(data) && data.length > 0) {
+        // L'API restituisce già i dati nel formato corretto
+        setHourlyData(data);
+        setError(null);
+      } else {
+        // Fallback ai dati mock se non ci sono dati orari
+        generateMockHourlyData();
+        setError('Dati orari non disponibili, showing mock data.');
+      }
+    } catch (err) {
+      console.error('[Modal] Errore nel caricamento dati orari:', err);
+      // Fallback ai dati mock in caso di errore di rete
+      generateMockHourlyData();
+      setError(`Errore di rete: ${err instanceof Error ? err.message : 'Errore sconosciuto'}. Showing mock data.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateMockHourlyData = () => {
+    const mockData: HourlyWeather[] = [];
+    for (let i = 0; i < 24; i += 3) {
+      const baseTemp = 15 + Math.floor(Math.random() * 15);
+      
+      // Simula variazione temperatura durante il giorno
+      let tempVariation = 0;
+      if (i >= 6 && i <= 18) { // Giorno
+        tempVariation = Math.floor(Math.random() * 8);
+      } else { // Notte
+        tempVariation = -Math.floor(Math.random() * 5);
+      }
+      
+      const temperature = baseTemp + tempVariation;
+      
+      mockData.push({
+        time: `${i.toString().padStart(2, '0')}:00`,
+        condition: ['sereno', 'poco nuvoloso', 'nuvoloso', 'coperto', 'piovoso'][Math.floor(Math.random() * 5)],
+        temperature: `${temperature}°`,
+        precipitation: `${Math.floor(Math.random() * 30)}%`,
+        wind: `${5 + Math.floor(Math.random() * 20)} km/h`,
+        humidity: `${40 + Math.floor(Math.random() * 40)}%`,
+        feelsLike: `${temperature + Math.floor(Math.random() * 6) - 3}°`,
+        icon: ''
+      });
+    }
+    
+    setHourlyData(mockData);
+  };
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -167,12 +235,29 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
           <div className="max-w-none">
             <div className="flex items-center justify-between mb-6 md:mb-8">
               <h3 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
-                Previsioni Orarie Dettagliate
+                Previsioni Orarie Simulate
               </h3>
-              <div className="hidden md:block text-sm text-gray-500 dark:text-gray-400">
-                Premi <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">ESC</kbd> per chiudere
+              <div className="flex items-center space-x-4">
+                {loading && (
+                  <div className="flex items-center text-blue-600 dark:text-blue-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                    <span className="text-sm">Caricamento...</span>
+                  </div>
+                )}
+                <div className="hidden md:block text-sm text-gray-500 dark:text-gray-400">
+                  Premi <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">ESC</kbd> per chiudere
+                </div>
               </div>
             </div>
+            
+            {loading && (
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                  <div className="text-blue-700 dark:text-blue-300 font-medium">Caricamento dati orari...</div>
+                </div>
+              </div>
+            )}
             
             {/* Desktop Table */}
             <div className="hidden lg:block overflow-x-auto">
@@ -209,7 +294,7 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                       className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"
                     >
                       <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        {hour.hour}
+                        {hour.time}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center space-x-3">
@@ -221,14 +306,14 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                       </td>
                       <td className="px-4 py-4 text-center">
                         <span className="text-lg font-semibold text-red-500 dark:text-red-400">
-                          {hour.temperature}°C
+                          {hour.temperature}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center">
                         <div className="flex items-center justify-center space-x-1">
                           <Droplets className="w-4 h-4 text-blue-500" />
                           <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {hour.precipitation}%
+                            {hour.precipitation}
                           </span>
                         </div>
                       </td>
@@ -244,7 +329,7 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                         <div className="flex items-center justify-center space-x-1">
                           <Eye className="w-4 h-4 text-cyan-500" />
                           <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {hour.humidity}%
+                            {hour.humidity}
                           </span>
                         </div>
                       </td>
@@ -252,7 +337,7 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                         <div className="flex items-center justify-center space-x-1">
                           <Thermometer className="w-4 h-4 text-orange-500" />
                           <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {hour.feelsLike}°C
+                            {hour.feelsLike}
                           </span>
                         </div>
                       </td>
@@ -271,7 +356,7 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                 >
                   <div className="grid grid-cols-7 gap-4 items-center text-center">
                     <div className="font-semibold text-gray-900 dark:text-white">
-                      {hour.hour}
+                      {hour.time}
                     </div>
                     <div className="flex items-center justify-center space-x-2">
                       {getWeatherIcon(hour.condition)}
@@ -280,11 +365,11 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                       </span>
                     </div>
                     <div className="text-lg font-bold text-red-500 dark:text-red-400">
-                      {hour.temperature}°C
+                      {hour.temperature}
                     </div>
                     <div className="flex items-center justify-center space-x-1">
                       <Droplets className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{hour.precipitation}%</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{hour.precipitation}</span>
                     </div>
                     <div className="flex items-center justify-center space-x-1">
                       <Wind className="w-4 h-4 text-gray-500" />
@@ -292,11 +377,11 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                     </div>
                     <div className="flex items-center justify-center space-x-1">
                       <Eye className="w-4 h-4 text-cyan-500" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{hour.humidity}%</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{hour.humidity}</span>
                     </div>
                     <div className="flex items-center justify-center space-x-1">
                       <Thermometer className="w-4 h-4 text-orange-500" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{hour.feelsLike}°C</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{hour.feelsLike}</span>
                     </div>
                   </div>
                 </div>
@@ -312,10 +397,10 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {hour.hour}
+                      {hour.time}
                     </span>
                     <span className="text-xl font-bold text-red-500 dark:text-red-400">
-                      {hour.temperature}°C
+                      {hour.temperature}
                     </span>
                   </div>
                   
@@ -329,7 +414,7 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex items-center space-x-2">
                       <Droplets className="w-4 h-4 text-blue-500" />
-                      <span className="text-gray-700 dark:text-gray-300">{hour.precipitation}%</span>
+                      <span className="text-gray-700 dark:text-gray-300">{hour.precipitation}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Wind className="w-4 h-4 text-gray-500" />
@@ -337,11 +422,11 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
                     </div>
                     <div className="flex items-center space-x-2">
                       <Eye className="w-4 h-4 text-cyan-500" />
-                      <span className="text-gray-700 dark:text-gray-300">{hour.humidity}%</span>
+                      <span className="text-gray-700 dark:text-gray-300">{hour.humidity}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Thermometer className="w-4 h-4 text-orange-500" />
-                      <span className="text-gray-700 dark:text-gray-300">{hour.feelsLike}°C</span>
+                      <span className="text-gray-700 dark:text-gray-300">{hour.feelsLike}</span>
                     </div>
                   </div>
                 </div>
