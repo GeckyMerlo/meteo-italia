@@ -30,14 +30,14 @@ export async function GET(request: NextRequest) {
     const { lat, lon } = nominatimData[0];
     console.log(`📍 Coordinates for ${cityName}: ${lat}, ${lon}`);
     
-    // 2. Ottieni dati MeteoAM
+    // 2. Ottieni dati MeteoAM con la nuova struttura
     const meteoamUrl = `https://api.meteoam.it/deda-ows/api/GetStationRadius/${lat}/${lon}`;
     console.log("🌡️ Fetching MeteoAM station data...");
     
     const meteoamResponse = await fetch(meteoamUrl);
     const meteoamData = await meteoamResponse.json();
     
-    if (!meteoamData || !meteoamData.features || meteoamData.features.length === 0) {
+    if (!meteoamData || !meteoamData.pointlist || meteoamData.pointlist.length === 0) {
       return NextResponse.json({ 
         error: "No weather stations found",
         provider: "meteoam",
@@ -46,77 +46,146 @@ export async function GET(request: NextRequest) {
     }
     
     // 3. Trova la stazione più vicina con dati validi
-    const station = meteoamData.features[0];
-    const properties = station.properties;
-    const stationName = properties.nome || properties.name || "Stazione sconosciuta";
+    const stationCoords = meteoamData.pointlist[0]; // [lat, lon] della prima stazione
+    const stationIndex = 0;
     
-    // 4. Genera dati orari simulati basati sui dati della stazione
-    // MeteoAM non fornisce dati orari dettagliati tramite questa API,
-    // quindi generiamo una simulazione basata sui dati attuali
-    const temperature = properties.t2m || properties.temp || 20;
-    const humidity = properties.rh2m || properties.humidity || 50;
-    const pressure = properties.pres || properties.pressure || 1013;
-    const windSpeed = properties.vel_vnt || properties.wind_speed || 5;
+    // Ottieni il nome della stazione dalle informazioni extra
+    const stationName = meteoamData.extrainfo?.station_name?.[stationIndex] || "Stazione MeteoAM";
+    const stationICAO = meteoamData.extrainfo?.station_icao?.[stationIndex] || "";
     
+    // Estrai i dati meteorologici per la stazione
+    const datasets = meteoamData.datasets?.[stationIndex];
+    if (!datasets) {
+      return NextResponse.json({ 
+        error: "No weather data available",
+        provider: "meteoam",
+        hourlyData: []
+      }, { status: 404 });
+    }
+    
+    // Estrai le serie temporali per la stazione
+    const timeseries = meteoamData.timeseries?.[stationIndex] || [];
+    console.log(`📊 Found ${timeseries.length} time points for station ${stationName}`);
+    
+    // Determina quale giorno filtrare basato sul parametro day
+    let targetDate = new Date();
+    if (day === "domani") {
+      targetDate.setDate(targetDate.getDate() + 1);
+    } else if (day === "dopodomani") {
+      targetDate.setDate(targetDate.getDate() + 2);
+    }
+    
+    // 4. Genera dati orari basati sui dati reali disponibili
     const hourlyData = [];
-    const currentHour = new Date().getHours();
     
-    // Genera 24 ore di dati simulati
-    for (let i = 0; i < 24; i++) {
-      const hour = i;
+    // Filtra i dati per il giorno richiesto (se specificato)
+    const filteredTimeseries = timeseries.filter((timestamp: string, index: number) => {
+      if (!day || day === "oggi") return index < 24; // prendi le prime 24 ore per oggi
       
-      // Simula variazioni naturali durante il giorno
-      const tempVariation = Math.sin((hour - 6) * Math.PI / 12) * 8; // Variazione di 8°C
-      const humidityVariation = Math.sin((hour - 12) * Math.PI / 12) * -15; // Umidità varia inversamente
-      const windVariation = Math.random() * 5 - 2.5; // Variazione casuale del vento
+      const tsDate = new Date(timestamp);
+      return tsDate.toDateString() === targetDate.toDateString();
+    });
+    
+    console.log(`🎯 Processing ${filteredTimeseries.length} data points for ${day || 'oggi'}`);
+    
+    for (let i = 0; i < Math.min(24, filteredTimeseries.length); i++) {
+      const timestamp = filteredTimeseries[i];
+      const date = new Date(timestamp);
+      const hour = date.getHours();
       
-      const hourlyTemp = Math.round(temperature + tempVariation);
-      const hourlyHumidity = Math.max(10, Math.min(90, Math.round(humidity + humidityVariation)));
-      const hourlyWind = Math.max(0, Math.round(windSpeed + windVariation));
+      // Trova l'indice originale nel dataset
+      const originalIndex = timeseries.indexOf(timestamp);
+      if (originalIndex === -1) continue;
       
-      // Genera condizioni meteo basate sulla temperatura e umidità
+      // Estrai i dati meteorologici per questo momento
+      const temperature = datasets[0]?.[originalIndex] || null; // 2t (temperatura a 2m)
+      const humidity = datasets[1]?.[originalIndex] || null;    // r (umidità relativa)
+      const pressure = datasets[2]?.[originalIndex] || null;    // pmsl (pressione al livello del mare)
+      const windDirection = datasets[3]?.[originalIndex] || null; // wdir (direzione vento)
+      const windSpeed = datasets[5]?.[originalIndex] || null;   // wspd (velocità vento)
+      const iconCode = datasets[8]?.[originalIndex] || "01";    // icon code
+      
+      // Determina la condizione meteo basata sui codici icona e umidità
       let condition = "sereno";
-      let icon = "01";
-      
-      if (hourlyHumidity > 80) {
+      if (iconCode && iconCode !== "01" && iconCode !== "02") {
+        if (iconCode.includes("03") || iconCode.includes("04")) condition = "nuvoloso";
+        else if (iconCode.includes("09") || iconCode.includes("10")) condition = "pioggia";
+        else if (iconCode.includes("11")) condition = "temporale";
+        else if (iconCode.includes("13")) condition = "neve";
+        else if (iconCode.includes("50")) condition = "nebbia";
+        else if (iconCode.includes("02")) condition = "poco nuvoloso";
+      } else if (humidity && humidity > 85) {
         condition = "nuvoloso";
-        icon = "04";
-      } else if (hourlyHumidity > 65) {
+      } else if (humidity && humidity > 70) {
         condition = "parz nuvoloso";
-        icon = "03";
-      } else if (hourlyHumidity > 50) {
+      } else if (humidity && humidity > 55) {
         condition = "poco nuvoloso";
-        icon = "02";
+      }
+      
+      // Calcola probabilità di precipitazioni basata sull'umidità e icona
+      let precipitationProbability = 0;
+      if (iconCode && (iconCode.includes("09") || iconCode.includes("10"))) {
+        precipitationProbability = 80;
+      } else if (iconCode && iconCode.includes("11")) {
+        precipitationProbability = 90;
+      } else if (humidity && humidity > 80) {
+        precipitationProbability = Math.min(70, Math.round((humidity - 80) * 3.5));
       }
       
       hourlyData.push({
         hour: hour.toString().padStart(2, '0') + ':00',
-        temperature: hourlyTemp,
+        timestamp: timestamp,
+        temperature: temperature ? Math.round(temperature) : null,
         condition: condition,
-        humidity: hourlyHumidity,
-        wind: hourlyWind,
-        pressure: Math.round(pressure + (Math.random() * 4 - 2)), // Piccola variazione di pressione
-        icon: icon,
-        precipitationProbability: hourlyHumidity > 75 ? Math.round((hourlyHumidity - 75) * 2) : 0
+        humidity: humidity ? Math.round(humidity) : null,
+        wind: windSpeed ? Math.round(windSpeed) : null,
+        windDirection: windDirection && windDirection !== "VRB" ? windDirection : null,
+        pressure: pressure ? Math.round(pressure) : null,
+        icon: iconCode,
+        precipitationProbability: precipitationProbability
       });
     }
     
     console.log(`✅ Generated ${hourlyData.length} hourly entries for ${stationName}`);
     
+    // Ottieni i dati min/max per il giorno richiesto da extrainfo
+    const minMaxData = meteoamData.extrainfo?.station_min_max?.[stationIndex];
+    let dailyMinMax = null;
+    
+    if (minMaxData && minMaxData.length > 0) {
+      // Determina quale giorno prendere (0=oggi+2, 1=oggi+1, 2=oggi)
+      let dayIndex = 2; // default oggi
+      if (day === "domani") dayIndex = 1;
+      else if (day === "dopodomani") dayIndex = 0;
+      
+      const dayData = minMaxData[dayIndex];
+      if (dayData && dayData.minCelsius !== "-" && dayData.maxCelsius !== "-") {
+        dailyMinMax = {
+          min: parseInt(dayData.minCelsius),
+          max: parseInt(dayData.maxCelsius),
+          date: dayData.localDate
+        };
+        console.log(`📊 Daily min/max for ${day || 'oggi'}: ${dailyMinMax.min}°/${dailyMinMax.max}°`);
+      }
+    }
+    
     // 5. Restituisci i dati orari formattati
     return NextResponse.json({
       provider: "meteoam",
       city: cityName,
+      day: day || "oggi",
       station: {
         name: stationName,
+        icao: stationICAO,
         coordinates: {
-          lat: station.geometry.coordinates[1],
-          lon: station.geometry.coordinates[0]
+          lat: stationCoords[0],
+          lon: stationCoords[1]
         }
       },
+      dailyMinMax: dailyMinMax,
       hourlyData: hourlyData,
       lastUpdated: new Date().toISOString(),
-      source: "MeteoAM (simulato)",
+      source: "MeteoAM (dati reali)",
       totalHours: hourlyData.length
     });
     
