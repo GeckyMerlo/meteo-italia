@@ -175,9 +175,101 @@ const HomePage = () => {
           });
         }
         
+        // Chiama l'API reale per ilMeteo
+        try {
+          const ilMeteoResponse = await fetch(`/api/ilMeteo?city=${encodeURIComponent(selectedCity.toLowerCase())}&day=${dayNumber}`);
+          
+          if (ilMeteoResponse.ok) {
+            const ilMeteoData: ApiResponse = await ilMeteoResponse.json();
+            
+            // Controlla se abbiamo ricevuto dati per il giorno specifico
+            if (ilMeteoData.provider === 'ilmeteo' && ilMeteoData.day !== undefined) {
+              weatherData.push({
+                provider: 'Il Meteo',
+                providerLogo: '🌦️',
+                city: selectedCity,
+                day: selectedDay,
+                maxTemp: ilMeteoData.maxTemp || ilMeteoData.max?.toString() || 'N/A',
+                minTemp: ilMeteoData.minTemp || ilMeteoData.min?.toString() || 'N/A',
+                weatherIconUrl: ilMeteoData.icon || '',
+                weatherDescription: ilMeteoData.weatherDescription || 'Previsioni da Il Meteo',
+                wind: ilMeteoData.wind || 'N/A',
+                humidity: ilMeteoData.humidity || 'N/A',
+                reliability: 'alta',
+                status: 'success',
+                lastUpdated: new Date().toISOString()
+              });
+            } else if (ilMeteoData.days && Array.isArray(ilMeteoData.days)) {
+              // Se abbiamo tutti i giorni del mese, trova quello richiesto
+              const requestedDay = ilMeteoData.days.find((d: ApiDayData) => d.day === dayNumber);
+              if (requestedDay) {
+                weatherData.push({
+                  provider: 'Il Meteo',
+                  providerLogo: '🌦️',
+                  city: selectedCity,
+                  day: selectedDay,
+                  maxTemp: requestedDay.max?.toString() || 'N/A',
+                  minTemp: requestedDay.min?.toString() || 'N/A',
+                  weatherIconUrl: requestedDay.icon || '',
+                  weatherDescription: 'Previsioni da Il Meteo',
+                  wind: 'N/A',
+                  humidity: 'N/A',
+                  reliability: 'alta',
+                  status: 'success',
+                  lastUpdated: new Date().toISOString()
+                });
+              } else {
+                // Giorno non trovato nei dati disponibili
+                weatherData.push({
+                  provider: 'Il Meteo',
+                  providerLogo: '🌦️',
+                  city: selectedCity,
+                  day: selectedDay,
+                  status: 'unavailable',
+                  message: `Dati non disponibili per il giorno ${dayNumber}`,
+                  lastUpdated: new Date().toISOString()
+                });
+              }
+            } else {
+              // Formato dati non riconosciuto
+              weatherData.push({
+                provider: 'Il Meteo',
+                providerLogo: '🌦️',
+                city: selectedCity,
+                day: selectedDay,
+                status: 'error',
+                message: 'Formato dati non riconosciuto',
+                lastUpdated: new Date().toISOString()
+              });
+            }
+          } else {
+            // Errore HTTP
+            const errorData = await ilMeteoResponse.json().catch(() => ({}));
+            weatherData.push({
+              provider: 'Il Meteo',
+              providerLogo: '🌦️',
+              city: selectedCity,
+              day: selectedDay,
+              status: 'error',
+              message: errorData.error || `Errore ${ilMeteoResponse.status}`,
+              lastUpdated: new Date().toISOString()
+            });
+          }
+        } catch (apiError) {
+          // Errore nella chiamata API
+          weatherData.push({
+            provider: 'Il Meteo',
+            providerLogo: '🌦️',
+            city: selectedCity,
+            day: selectedDay,
+            status: 'error',
+            message: 'Errore di connessione a Il Meteo',
+            lastUpdated: new Date().toISOString()
+          });
+        }
+        
         // Aggiungi altri provider con dati mock per ora
         const mockProviders = [
-          { name: 'Il Meteo', logo: '🌦️', color: 'green' },
           { name: 'MeteoAM', logo: '⛅', color: 'orange' },
           { name: 'Meteo.it', logo: '☀️', color: 'purple' }
         ];

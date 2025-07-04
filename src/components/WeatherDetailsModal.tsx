@@ -50,32 +50,62 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
     try {
       // Converti il giorno selezionato nel formato corretto per l'API oraria
       let dayParam: string;
+      const today = new Date();
+      
       if (day === 'oggi') {
-        dayParam = '0';
+        dayParam = today.getDate().toString();
       } else if (day === 'domani') {
-        dayParam = '1';
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        dayParam = tomorrow.getDate().toString();
       } else if (day.startsWith('+') && day.endsWith('giorni')) {
         // Estrai il numero da "+2giorni", "+3giorni", etc.
         const daysAhead = parseInt(day.replace('+', '').replace('giorni', ''));
-        dayParam = daysAhead.toString();
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + daysAhead);
+        dayParam = targetDate.getDate().toString();
       } else {
         // Fallback: prova a usare il valore direttamente
         dayParam = day;
       }
       
-      // Carica i dati orari reali dall'API
-      const response = await fetch(`/api/3bMeteo/orari?city=${encodeURIComponent(city)}&day=${dayParam}`);
+      // Carica i dati orari reali dall'API in base al provider
+      let apiEndpoint = '';
+      if (provider.toLowerCase().includes('3b meteo')) {
+        apiEndpoint = `/api/3bMeteo/orari?city=${encodeURIComponent(city)}&day=${dayParam}`;
+      } else if (provider.toLowerCase().includes('il meteo')) {
+        apiEndpoint = `/api/ilMeteo/orari?city=${encodeURIComponent(city)}&day=${dayParam}`;
+      } else {
+        // Provider non supportato, usa 3B Meteo come fallback
+        apiEndpoint = `/api/3bMeteo/orari?city=${encodeURIComponent(city)}&day=${dayParam}`;
+      }
+      
+      const response = await fetch(apiEndpoint);
       const data = await response.json();
       
-      if (response.ok && Array.isArray(data)) {
-        if (data.length > 0) {
+      if (response.ok) {
+        // Gestisci diversi formati di risposta dalle API
+        let hourlyEntries: HourlyWeather[] = [];
+        
+        if (Array.isArray(data)) {
+          // Formato diretto (array di dati orari)
+          hourlyEntries = data;
+        } else if (data.hourlyData && Array.isArray(data.hourlyData)) {
+          // Formato con wrapper (es. ilMeteo)
+          hourlyEntries = data.hourlyData;
+        } else {
+          // Formato non riconosciuto
+          throw new Error('Formato dati non riconosciuto');
+        }
+        
+        if (hourlyEntries.length > 0) {
           // L'API restituisce dati reali
-          setHourlyData(data);
+          setHourlyData(hourlyEntries);
           setError(null);
         } else {
           // L'API restituisce un array vuoto (nessun dato reale disponibile)
           setHourlyData([]);
-          setError('Nessun dato orario disponibile per questo giorno su 3B Meteo.');
+          setError(`Nessun dato orario disponibile per questo giorno su ${provider}.`);
         }
       } else {
         // Errore nell'API
