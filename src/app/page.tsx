@@ -276,7 +276,7 @@ const HomePage = () => {
         
         // Aggiungi altri provider con dati mock per ora
         const mockProviders = [
-          { name: 'MeteoAM', logo: '/images/AMLogo.gif', color: 'orange' },
+          { name: 'MeteoAM', logo: '/images/Areonautica.jpg', color: 'orange' },
           { name: 'Meteo.it', logo: '☀️', color: 'purple' }
         ];
         
