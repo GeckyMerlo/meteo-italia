@@ -58,13 +58,13 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ selectedDay, onDayChange }) =
 
   return (
     <div className="w-full">
-      <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 text-center">
+      <h2 className="text-xl font-bold text-amber-900 dark:text-gray-200 mb-6 text-center">
         Seleziona il giorno
       </h2>
       
       <div className="relative">
         {/* Horizontal scrollable timeline */}
-        <div className="flex gap-3 overflow-x-auto pb-4 scroll-smooth scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100 dark:scrollbar-track-gray-700">
+        <div className="flex gap-4 overflow-x-auto pb-6 scroll-smooth scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-orange-100 dark:scrollbar-track-gray-700">
           {dayData.map((day, index) => (
             <button
               key={day.value}
@@ -78,13 +78,13 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ selectedDay, onDayChange }) =
               <div className={`
                 relative p-4 rounded-2xl min-w-[100px] text-center border-2 transition-all duration-300
                 ${selectedDay === day.value
-                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/30'
-                  : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md'
+                  ? 'bg-orange-500 dark:bg-blue-600 border-orange-500 dark:border-blue-600 text-white shadow-lg shadow-orange-200 dark:shadow-blue-900/30'
+                  : 'bg-white dark:bg-gray-700 border-orange-200 dark:border-gray-600 text-amber-900 dark:text-gray-300 hover:border-orange-400 dark:hover:border-blue-500 hover:shadow-md'
                 }
               `}>
                 {/* Day label */}
                 <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
-                  selectedDay === day.value ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+                  selectedDay === day.value ? 'text-orange-100 dark:text-blue-100' : 'text-amber-600 dark:text-gray-400'
                 }`}>
                   {day.label}
                 </div>
@@ -96,7 +96,7 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ selectedDay, onDayChange }) =
                 
                 {/* Date */}
                 <div className={`text-sm font-medium ${
-                  selectedDay === day.value ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+                  selectedDay === day.value ? 'text-white' : 'text-amber-700 dark:text-gray-300'
                 }`}>
                   {day.date}
                 </div>
@@ -118,19 +118,19 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ selectedDay, onDayChange }) =
         </div>
         
         {/* Navigation gradient hints */}
-        <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-blue-50 to-transparent dark:from-gray-800 pointer-events-none rounded-r-lg"></div>
-        <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-blue-50 to-transparent dark:from-gray-800 pointer-events-none rounded-l-lg"></div>
+        <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-amber-50 dark:from-gray-800 to-transparent pointer-events-none rounded-r-lg"></div>
+        <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-amber-50 dark:from-gray-800 to-transparent pointer-events-none rounded-l-lg"></div>
       </div>
       
       {/* Current selection info */}
       <div className="mt-4 text-center">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-amber-700 dark:text-gray-400">
           <span className="font-medium">Previsioni per:</span>{' '}
-          <span className="font-semibold text-blue-600 dark:text-blue-400">
+          <span className="font-semibold text-orange-600 dark:text-blue-400">
             {dayData.find(d => d.value === selectedDay)?.label || selectedDay}
           </span>
           {dayData.find(d => d.value === selectedDay)?.date && (
-            <span className="ml-1 text-gray-500">
+            <span className="ml-1 text-amber-600 dark:text-gray-500">
               ({dayData.find(d => d.value === selectedDay)?.date})
             </span>
           )}

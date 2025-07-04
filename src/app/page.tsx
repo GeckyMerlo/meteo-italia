@@ -51,6 +51,12 @@ const HomePage = () => {
   const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Gestisci l'hydration per evitare flash
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Fetch weather data when city or day changes
   useEffect(() => {
@@ -348,32 +354,31 @@ const HomePage = () => {
   }, [selectedCity, selectedDay]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 transition-all duration-500">
+    <main className={`min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 transition-all duration-500 ${isHydrated ? 'hydrated' : 'no-flash'}`}>
       <div className="container mx-auto px-4 py-6">
         <header className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
-            <div className="text-7xl mr-4 animate-bounce">🌤️</div>
+            <div className="text-7xl mr-4">🌤️</div>
             <div>
-              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 dark:from-blue-600 dark:to-purple-600 bg-clip-text text-transparent mb-2">
                 Meteo Italia
               </h1>
-              <p className="text-gray-600 dark:text-gray-300 text-lg md:text-xl">
+              <p className="text-amber-800 dark:text-gray-300 text-lg md:text-xl font-medium">
                 Confronta le previsioni dai principali provider italiani
               </p>
             </div>
           </div>
           
-          <div className="flex justify-center mb-4">
+          <div className="theme-switcher-container">
             <ThemeSwitcher />
           </div>
           
           {/* Provider badges */}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
-            {['3B Meteo', 'Il Meteo', 'MeteoAM', 'Meteo.it'].map((provider, index) => (
+            {['3B Meteo', 'Il Meteo', 'MeteoAM', 'Meteo.it'].map((provider) => (
               <span 
                 key={provider}
-                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 backdrop-blur-sm border border-gray-200 dark:border-gray-700"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="inline-flex items-center px-4 py-2 rounded-full text-xs font-semibold bg-orange-100 dark:bg-gray-800/80 text-orange-800 dark:text-gray-300 backdrop-blur-sm border-2 border-orange-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-200"
               >
                 {provider}
               </span>
@@ -382,14 +387,14 @@ const HomePage = () => {
         </header>
         
         <div className="space-y-8">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6">
+          <div className="bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-orange-200 dark:border-gray-700/50 p-8 hover:shadow-3xl transition-all duration-300">
             <SearchBar 
               selectedCity={selectedCity} 
               onCityChange={setSelectedCity} 
             />
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6">
+          <div className="bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-orange-200 dark:border-gray-700/50 p-8 hover:shadow-3xl transition-all duration-300">
             <DayTimeline 
               selectedDay={selectedDay} 
               onDayChange={setSelectedDay} 
@@ -399,11 +404,11 @@ const HomePage = () => {
           {/* Weather Cards Grid */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-2xl font-bold text-amber-900 dark:text-white">
                 Previsioni per {selectedCity} - {selectedDay}
               </h2>
               {loading && (
-                <div className="flex items-center text-blue-600 dark:text-blue-400">
+                <div className="flex items-center text-orange-600 dark:text-blue-400">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-2"></div>
                   Caricamento...
                 </div>
@@ -411,15 +416,15 @@ const HomePage = () => {
             </div>
             
             {error && (
-              <div className="bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm border border-red-200 dark:border-red-800 rounded-2xl p-6 shadow-lg">
+              <div className="bg-red-50 dark:bg-red-900/20 backdrop-blur-sm border-2 border-red-300 dark:border-red-800 rounded-2xl p-8 shadow-2xl">
                 <div className="flex items-center justify-center mb-4">
                   <div className="text-red-500 text-4xl">⚠️</div>
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
+                  <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">
                     Errore nel caricamento
                   </h3>
-                  <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+                  <p className="text-red-700 dark:text-red-400 mb-4">{error}</p>
                   <button
                     onClick={() => {
                       setError(null);
@@ -427,7 +432,7 @@ const HomePage = () => {
                       const event = new CustomEvent('retry-fetch');
                       window.dispatchEvent(event);
                     }}
-                    className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors duration-200"
+                    className="bg-red-600 hover:bg-red-700 text-white font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     Riprova
                   </button>
@@ -469,93 +474,42 @@ const HomePage = () => {
                 ))
               ) : !error && !loading ? (
                 // Empty state when no data and no error
-                <div className="col-span-full text-center py-12">
-                  <div className="text-6xl mb-4">🔍</div>
-                  <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <div className="col-span-full text-center py-16">
+                  <div className="text-8xl mb-6">🔍</div>
+                  <h3 className="text-2xl font-bold text-amber-800 dark:text-gray-300 mb-4">
                     Cerca una città per iniziare
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-amber-600 dark:text-gray-400 text-lg">
                     Inserisci il nome di una città italiana per vedere le previsioni
                   </p>
                 </div>
               ) : null}
-              
-              {/* Debug info in development */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="col-span-full space-y-4">
-                  <div className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 p-3 rounded">
-                    Debug: Loading={loading.toString()}, Error={error || 'none'}, Data count={weatherData.length}
-                  </div>
-                  
-                  {/* API Test Panel */}
-                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        🔧 Debug API
-                      </h3>
-                      <button
-                        onClick={async () => {
-                          const dayNumber = selectedDay === 'oggi' ? new Date().getDate() : 
-                                           selectedDay === 'domani' ? new Date().getDate() + 1 : 
-                                           parseInt(selectedDay);
-                          
-                          const testUrl = `/api/meteo?city=${encodeURIComponent(selectedCity.toLowerCase())}&day=${dayNumber}`;
-                          console.log('🧪 Testing API:', testUrl);
-                          
-                          try {
-                            const response = await fetch(testUrl);
-                            const data = await response.json();
-                            console.log('✅ API Response:', data);
-                            alert('Check console for API response');
-                          } catch (err) {
-                            console.error('❌ API Error:', err);
-                            alert('API Error - check console');
-                          }
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
-                      >
-                        Test API
-                      </button>
-                    </div>
-
-                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <div><strong>City:</strong> {selectedCity}</div>
-                      <div><strong>Day:</strong> {selectedDay}</div>
-                      <div><strong>API URL:</strong> /api/meteo?city={selectedCity.toLowerCase()}&day={
-                        selectedDay === 'oggi' ? new Date().getDate() : 
-                        selectedDay === 'domani' ? new Date().getDate() + 1 : 
-                        parseInt(selectedDay)
-                      }</div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
           
           {/* Footer */}
-          <footer className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <div className="space-y-4">
-              <div className="flex justify-center items-center space-x-2 text-sm">
-                <span>🌟</span>
+          <footer className="text-center py-16 text-amber-600 dark:text-gray-400">
+            <div className="space-y-6">
+              <div className="flex justify-center items-center space-x-3 text-base font-medium">
+                <span className="text-2xl">🌟</span>
                 <span>Dati a scopo dimostrativo. Non affiliato con i provider meteorologici ufficiali.</span>
               </div>
-              <div className="flex justify-center items-center space-x-4 text-xs">
-                <span className="flex items-center space-x-1">
+              <div className="flex justify-center items-center space-x-6 text-sm">
+                <span className="flex items-center space-x-2 bg-orange-100 dark:bg-gray-800 px-3 py-2 rounded-full">
                   <span>⚡</span>
                   <span>Powered by Next.js 15</span>
                 </span>
-                <span className="flex items-center space-x-1">
+                <span className="flex items-center space-x-2 bg-orange-100 dark:bg-gray-800 px-3 py-2 rounded-full">
                   <span>🎨</span>
                   <span>Styled with Tailwind CSS</span>
                 </span>
-                <span className="flex items-center space-x-1">
+                <span className="flex items-center space-x-2 bg-orange-100 dark:bg-gray-800 px-3 py-2 rounded-full">
                   <span>🚀</span>
                   <span>Hosted on Vercel</span>
                 </span>
               </div>
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700 max-w-md mx-auto">
-                <p className="text-xs text-gray-400">
+              <div className="pt-6 border-t-2 border-amber-300 dark:border-gray-700 max-w-md mx-auto">
+                <p className="text-sm text-amber-500 dark:text-gray-500 font-medium">
                   © 2025 Meteo Italia - Un progetto dimostrativo per confrontare previsioni meteorologiche
                 </p>
               </div>
