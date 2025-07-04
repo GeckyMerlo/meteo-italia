@@ -359,7 +359,7 @@ const HomePage = () => {
         <header className="text-center mb-8">
           <div className="flex items-center justify-center mb-6">
             <div className="text-7xl mr-4">
-              <img src="/images/logo.png" alt="Logo" className="h-12" />
+              <img src="/images/logo.png" alt="Logo" className="w-24 h-24" />
             </div>
             <div>
               <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 dark:from-blue-600 dark:to-purple-600 bg-clip-text text-transparent mb-2">
