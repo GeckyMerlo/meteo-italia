@@ -473,11 +473,6 @@ const HomePage = () => {
             </div>
           </div>
 
-          {/* Theme switcher */}
-          <div className="theme-switcher-container">
-            <ThemeSwitcher />
-          </div>
-          
       {/* Provider badges */}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
             {['3B Meteo', 'Il Meteo', 'MeteoAM', 'Meteo.it'].map((provider) => (
