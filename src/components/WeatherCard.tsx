@@ -212,7 +212,11 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ weatherData, loading }) => {
           )}
         </div>
         <div className="flex items-center space-x-2">
-          <div className="text-3xl">{providerLogo || providerStyle.logoEmoji}</div>
+          {providerLogo && providerLogo.startsWith('/images/') ? (
+            <img src={providerLogo} alt={provider} className="h-8 w-8 object-contain" />
+          ) : (
+            <div className="text-3xl">{providerLogo || providerStyle.logoEmoji}</div>
+          )}
           {status === 'success' && (
             <MousePointer className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors duration-200" />
           )}
