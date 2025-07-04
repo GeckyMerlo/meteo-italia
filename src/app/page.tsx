@@ -43,6 +43,23 @@ interface ApiResponse {
   minTemp?: string;
   wind?: string;
   humidity?: string;
+  // MeteoAM specific fields
+  location?: string;
+  coordinates?: { lat: number; lon: number };
+  station?: {
+    name: string;
+    distance: number;
+  };
+  temperature?: number;
+  windSpeed?: number;
+  windDirection?: number;
+  pressure?: number;
+  minMax?: {
+    min: number | null;
+    max: number | null;
+  };
+  source?: string;
+  timestamp?: string;
 }
 
 const HomePage = () => {
@@ -274,9 +291,87 @@ const HomePage = () => {
           });
         }
         
+        // Chiama l'API reale per MeteoAM
+        try {
+          const meteoAMResponse = await fetch(`/api/MeteoAM?cityName=${encodeURIComponent(selectedCity)}`);
+          
+          if (meteoAMResponse.ok) {
+            const meteoAMData: ApiResponse = await meteoAMResponse.json();
+            
+            // Controlla se abbiamo ricevuto dati validi
+            if (meteoAMData.temperature !== undefined && meteoAMData.temperature !== null) {
+              // Usa i dati min/max reali se disponibili, altrimenti calcola approssimazioni
+              const currentTemp = meteoAMData.temperature;
+              let minTemp: string = 'N/A';
+              let maxTemp: string = 'N/A';
+              
+              if (meteoAMData.minMax?.min !== undefined && meteoAMData.minMax?.min !== null &&
+                  meteoAMData.minMax?.max !== undefined && meteoAMData.minMax?.max !== null) {
+                // Usa i valori reali min/max
+                minTemp = meteoAMData.minMax.min.toString();
+                maxTemp = meteoAMData.minMax.max.toString();
+              } else if (currentTemp !== undefined && currentTemp !== null) {
+                // Calcola approssimazioni se non disponibili i valori reali
+                minTemp = Math.round(currentTemp - 3).toString();
+                maxTemp = Math.round(currentTemp + 2).toString();
+              }
+              
+              const weatherItem: WeatherData = {
+                provider: 'MeteoAM',
+                providerLogo: '⛅',
+                city: selectedCity,
+                day: selectedDay,
+                maxTemp: maxTemp,
+                minTemp: minTemp,
+                weatherDescription: `Dati da stazione ${meteoAMData.station?.name || 'MeteoAM'} (${meteoAMData.station?.distance || 0}km)`,
+                wind: meteoAMData.windSpeed ? `${meteoAMData.windSpeed} km/h` : 'N/A',
+                humidity: meteoAMData.humidity !== undefined ? `${meteoAMData.humidity}%` : 'N/A',
+                reliability: 'alta',
+                status: 'success' as const,
+                lastUpdated: new Date().toISOString()
+              };
+              
+              weatherData.push(weatherItem);
+            } else {
+              // Dati non disponibili o errore
+              weatherData.push({
+                provider: 'MeteoAM',
+                providerLogo: '⛅',
+                city: selectedCity,
+                day: selectedDay,
+                status: 'unavailable',
+                message: meteoAMData.error || 'Dati non disponibili per questa città',
+                lastUpdated: new Date().toISOString()
+              });
+            }
+          } else {
+            // Errore HTTP
+            const errorData = await meteoAMResponse.json().catch(() => ({}));
+            weatherData.push({
+              provider: 'MeteoAM',
+              providerLogo: '⛅',
+              city: selectedCity,
+              day: selectedDay,
+              status: 'error',
+              message: errorData.error || `Errore ${meteoAMResponse.status}`,
+              lastUpdated: new Date().toISOString()
+            });
+          }
+        } catch (apiError) {
+          // Errore nella chiamata API
+          weatherData.push({
+            provider: 'MeteoAM',
+            providerLogo: '⛅',
+            city: selectedCity,
+            day: selectedDay,
+            status: 'error',
+            message: 'Errore di connessione a MeteoAM',
+            lastUpdated: new Date().toISOString()
+          });
+        }
+        
         // Aggiungi altri provider con dati mock per ora
         const mockProviders = [
-          { name: 'MeteoAM', logo: '⛅', color: 'orange' },
           { name: 'Meteo.it', logo: '☀️', color: 'purple' }
         ];
         
