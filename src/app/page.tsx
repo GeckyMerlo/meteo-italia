@@ -458,7 +458,7 @@ const HomePage = () => {
               <img
                 src="/images/logo.png"
                 alt="Logo"
-                className="w-32 h-32"
+                className="w-48 h-48"
               />
             </div>
 
@@ -500,10 +500,12 @@ const HomePage = () => {
           </div>
           
           <div className="bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-orange-200 dark:border-gray-700/50 p-8 hover:shadow-3xl transition-all duration-300">
-            <DayTimeline 
-              selectedDay={selectedDay} 
-              onDayChange={setSelectedDay} 
-            />
+            <div className="flex justify-center"></div>
+              <DayTimeline 
+                selectedDay={selectedDay} 
+                onDayChange={setSelectedDay} 
+              />
+            </div>
           </div>
           
           {/* Weather Cards Grid */}
