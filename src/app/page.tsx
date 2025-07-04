@@ -450,27 +450,24 @@ const HomePage = () => {
 
   return (
     <main className={`min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 transition-all duration-500 ${isHydrated ? 'hydrated' : 'no-flash'}`}>
-      <div className="container mx-auto px-4 py-6">
-        <header className="text-center mb-8">
-          <div className="flex items-center justify-center mb-6">
-            <div className="text-7xl mr-4">
-              <img src="/images/logo.png" alt="Logo" className="w-32 h-32" />
-            </div>
-            <div>
-              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 dark:from-blue-600 dark:to-purple-600 bg-clip-text text-transparent mb-2">
-                Meteo Italia
-              </h1>
-              <p className="text-amber-800 dark:text-gray-300 text-lg md:text-xl font-medium">
-                Confronta le previsioni dai principali provider italiani
-              </p>
-            </div>
-          </div>
-          
-          <div className="theme-switcher-container">
-            <ThemeSwitcher />
-          </div>
-          
-          {/* Provider badges */}
+      <div className="flex items-center justify-center mb-6">
+        <div className="mr-4 self-center">
+          <img src="/images/logo.png" alt="Logo" className="w-32 h-32" />
+        </div>
+        <div>
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 dark:from-blue-600 dark:to-purple-600 bg-clip-text text-transparent mb-2">
+            Meteo Italia
+          </h1>
+          <p className="text-amber-800 dark:text-gray-300 text-lg md:text-xl font-medium">
+            Confronta le previsioni dai principali provider italiani
+          </p>
+        </div>
+      </div>
+      <div className="theme-switcher-container">
+        <ThemeSwitcher />
+      </div>
+
+      {/* Provider badges */}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
             {['3B Meteo', 'Il Meteo', 'MeteoAM', 'Meteo.it'].map((provider) => (
               <span 
