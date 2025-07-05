@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import italyCities from '../../italy_cities.json';
 
 interface SearchBarProps {
   selectedCity: string;
@@ -12,17 +13,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ selectedCity, onCityChange }) => 
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Lista delle principali città italiane
-  const italianCities = [
-    'Roma', 'Milano', 'Napoli', 'Torino', 'Palermo', 'Genova', 'Bologna', 
-    'Firenze', 'Bari', 'Catania', 'Venezia', 'Verona', 'Messina', 'Padova', 
-    'Trieste', 'Brescia', 'Parma', 'Prato', 'Modena', 'Reggio Calabria',
-    'Reggio Emilia', 'Perugia', 'Ravenna', 'Livorno', 'Cagliari', 'Foggia',
-    'Rimini', 'Salerno', 'Ferrara', 'Sassari', 'Latina', 'Giugliano in Campania',
-    'Monza', 'Syracusa', 'Pescara', 'Bergamo', 'Forlì', 'Trento', 'Vicenza',
-    'Terni', 'Bolzano', 'Novara', 'Piacenza', 'Ancona', 'Andria', 'Arezzo',
-    'Udine', 'Cesena', 'Lecce', 'Pesaro'
-  ];
+  // Estrai i nomi dei comuni dal JSON
+  const italianCities = (italyCities.Foglio1 || []).map((c: any) => c.comune);
 
   // Aggiorna il valore dell'input quando cambia selectedCity
   useEffect(() => {
