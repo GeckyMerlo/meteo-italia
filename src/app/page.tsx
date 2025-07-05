@@ -116,12 +116,12 @@ const HomePage = () => {
             if (data.provider === '3bmeteo' && data.day !== undefined) {
               weatherData.push({
                 provider: '3B Meteo',
-                providerLogo: '/images/3BMeteoLogo.png', // Updated to match actual filename
+                providerLogo: '/images/3BMeteoLogo.png',
                 city: selectedCity,
                 day: selectedDay,
                 maxTemp: data.maxTemp || data.max?.toString() || 'N/A',
                 minTemp: data.minTemp || data.min?.toString() || 'N/A',
-                weatherIconUrl: data.icon || '',
+                weatherIconUrl: data.icon || '', // SOLO 3BMeteo: passa l'URL icona
                 weatherDescription: data.weatherDescription || 'Previsioni da 3B Meteo',
                 wind: data.wind || 'N/A',
                 humidity: data.humidity || 'N/A',
@@ -140,7 +140,7 @@ const HomePage = () => {
                   day: selectedDay,
                   maxTemp: requestedDay.max?.toString() || 'N/A',
                   minTemp: requestedDay.min?.toString() || 'N/A',
-                  weatherIconUrl: requestedDay.icon || '',
+                  weatherIconUrl: requestedDay.icon || '', // SOLO 3BMeteo: passa l'URL icona
                   weatherDescription: 'Previsioni da 3B Meteo',
                   wind: 'N/A',
                   humidity: 'N/A',
@@ -209,12 +209,12 @@ const HomePage = () => {
             if (ilMeteoData.provider === 'ilmeteo' && ilMeteoData.day !== undefined) {
               weatherData.push({
                 provider: 'Il Meteo',
-                providerLogo: '/images/ilMeteoLogo.png', 
+                providerLogo: '/images/ilMeteoLogo.png',
                 city: selectedCity,
                 day: selectedDay,
                 maxTemp: ilMeteoData.maxTemp || ilMeteoData.max?.toString() || 'N/A',
                 minTemp: ilMeteoData.minTemp || ilMeteoData.min?.toString() || 'N/A',
-                weatherIconUrl: ilMeteoData.icon || '',
+                // NON passare weatherIconUrl per ilMeteo, lasciando la logica classica
                 weatherDescription: ilMeteoData.weatherDescription || 'Previsioni da Il Meteo',
                 wind: ilMeteoData.wind || 'N/A',
                 humidity: ilMeteoData.humidity || 'N/A',
@@ -233,7 +233,7 @@ const HomePage = () => {
                   day: selectedDay,
                   maxTemp: requestedDay.max?.toString() || 'N/A',
                   minTemp: requestedDay.min?.toString() || 'N/A',
-                  weatherIconUrl: requestedDay.icon || '',
+                  // NON passare weatherIconUrl per ilMeteo, lasciando la logica classica
                   weatherDescription: 'Previsioni da Il Meteo',
                   wind: 'N/A',
                   humidity: 'N/A',

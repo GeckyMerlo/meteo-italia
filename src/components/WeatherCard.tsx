@@ -42,7 +42,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ weatherData, loading }) => {
     reliability,
     status,
     message,
-    lastUpdated
+    lastUpdated,
+    weatherIconUrl
   } = weatherData;
 
   const handleCardClick = () => {
@@ -226,7 +227,11 @@ const WeatherCard: React.FC<WeatherCardProps> = ({ weatherData, loading }) => {
       {/* Main weather info */}
       <div className="text-center mb-6">
         <div className="flex items-center justify-center mb-4">
-          {getWeatherIcon(weatherDescription)}
+          {weatherIconUrl ? (
+            <img src={weatherIconUrl} alt={weatherDescription || 'Icona meteo'} className="h-12 w-12 object-contain" />
+          ) : (
+            getWeatherIcon(weatherDescription)
+          )}
         </div>
         
         {/* Temperature */}
