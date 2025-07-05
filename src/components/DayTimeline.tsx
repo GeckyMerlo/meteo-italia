@@ -64,57 +64,59 @@ const DayTimeline: React.FC<DayTimelineProps> = ({ selectedDay, onDayChange }) =
       
       <div className="relative">
         {/* Horizontal scrollable timeline */}
-        <div className="flex gap-4 overflow-x-auto pb-6 scroll-smooth scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-orange-100 dark:scrollbar-track-gray-700">
-          {dayData.map((day, index) => (
-            <button
-              key={day.value}
-              onClick={() => onDayChange(day.value)}
-              className={`flex-shrink-0 group relative transition-all duration-300 transform ${
-                selectedDay === day.value 
-                  ? 'scale-105' 
-                  : 'hover:scale-102'
-              }`}
-            >
-              <div className={`
-                relative p-4 rounded-2xl min-w-[100px] text-center border-2 transition-all duration-300
-                ${selectedDay === day.value
-                  ? 'bg-orange-500 dark:bg-blue-600 border-orange-500 dark:border-blue-600 text-white shadow-lg shadow-orange-200 dark:shadow-blue-900/30'
-                  : 'bg-white dark:bg-gray-700 border-orange-200 dark:border-gray-600 text-amber-900 dark:text-gray-300 hover:border-orange-400 dark:hover:border-blue-500 hover:shadow-md'
-                }
-              `}>
-                {/* Day label */}
-                <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
-                  selectedDay === day.value ? 'text-orange-100 dark:text-blue-100' : 'text-amber-600 dark:text-gray-400'
-                }`}>
-                  {day.label}
-                </div>
-                
-                {/* Weather icon preview */}
-                <div className="text-2xl mb-2">
-                  {getWeatherIcon(index)}
-                </div>
-                
-                {/* Date */}
-                <div className={`text-sm font-medium ${
-                  selectedDay === day.value ? 'text-white' : 'text-amber-700 dark:text-gray-300'
-                }`}>
-                  {day.date}
-                </div>
-                
-                {/* Selected indicator */}
-                {selectedDay === day.value && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-1 bg-white rounded-full"></div>
-                )}
-                
-                {/* Special badges */}
-                {day.isToday && (
-                  <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                    •
+        <div className="flex justify-center">
+          <div className="flex gap-4 overflow-x-auto pb-6 scroll-smooth scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-orange-100 dark:scrollbar-track-gray-700">
+            {dayData.map((day, index) => (
+              <button
+                key={day.value}
+                onClick={() => onDayChange(day.value)}
+                className={`flex-shrink-0 group relative transition-all duration-300 transform ${
+                  selectedDay === day.value 
+                    ? 'scale-105' 
+                    : 'hover:scale-102'
+                }`}
+              >
+                <div className={`
+                  relative p-4 rounded-2xl min-w-[100px] text-center border-2 transition-all duration-300
+                  ${selectedDay === day.value
+                    ? 'bg-orange-500 dark:bg-blue-600 border-orange-500 dark:border-blue-600 text-white shadow-lg shadow-orange-200 dark:shadow-blue-900/30'
+                    : 'bg-white dark:bg-gray-700 border-orange-200 dark:border-gray-600 text-amber-900 dark:text-gray-300 hover:border-orange-400 dark:hover:border-blue-500 hover:shadow-md'
+                  }
+                `}>
+                  {/* Day label */}
+                  <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
+                    selectedDay === day.value ? 'text-orange-100 dark:text-blue-100' : 'text-amber-600 dark:text-gray-400'
+                  }`}>
+                    {day.label}
                   </div>
-                )}
-              </div>
-            </button>
-          ))}
+                  
+                  {/* Weather icon preview */}
+                  <div className="text-2xl mb-2">
+                    {getWeatherIcon(index)}
+                  </div>
+                  
+                  {/* Date */}
+                  <div className={`text-sm font-medium ${
+                    selectedDay === day.value ? 'text-white' : 'text-amber-700 dark:text-gray-300'
+                  }`}>
+                    {day.date}
+                  </div>
+                  
+                  {/* Selected indicator */}
+                  {selectedDay === day.value && (
+                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-1 bg-white rounded-full"></div>
+                  )}
+                  
+                  {/* Special badges */}
+                  {day.isToday && (
+                    <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                      •
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
         
         {/* Navigation gradient hints */}
