@@ -494,7 +494,7 @@ const HomePage = () => {
             />
           </div>
           
-          <div className="bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-orange-200 dark:border-gray-700/50 p-8 hover:shadow-3xl transition-all duration-300">
+          <div className=" flex justify-center items-center bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-orange-200 dark:border-gray-700/50 p-8 hover:shadow-3xl transition-all duration-300">
               <DayTimeline 
                 selectedDay={selectedDay} 
                 onDayChange={setSelectedDay} 
