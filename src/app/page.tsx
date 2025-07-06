@@ -2,7 +2,6 @@
 import SearchBar from '@/components/SearchBar';
 import DayTimeline from '@/components/DayTimeline';
 import SmartWeatherCard from '@/components/providers/SmartWeatherCard';
-import ThemeSwitcher from '@/components/ThemeSwitcher';
 import { useState, useEffect } from 'react';
 
 interface WeatherData {
