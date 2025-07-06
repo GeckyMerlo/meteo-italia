@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Cloud, Sun, CloudRain, Wind, Droplets, TrendingUp, AlertTriangle, Check, X, MousePointer } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Wind, Droplets, TrendingUp, AlertTriangle, Check, X, MousePointer, Info } from 'lucide-react';
 import WeatherDetailsModalMeteoAM from './WeatherDetailsModalMeteoAM';
 
 interface WeatherData {
@@ -19,6 +19,7 @@ interface WeatherData {
   status: 'success' | 'error' | 'unavailable';
   message?: string;
   lastUpdated: string;
+  hasDataWarning?: boolean; // Nuovo campo per il warning
 }
 
 interface WeatherCardMeteoAMProps {
@@ -43,7 +44,8 @@ const WeatherCardMeteoAM: React.FC<WeatherCardMeteoAMProps> = ({ weatherData, lo
     status,
     message,
     lastUpdated,
-    weatherIconUrl
+    weatherIconUrl,
+    hasDataWarning
   } = weatherData;
 
   const handleCardClick = () => {
@@ -155,6 +157,12 @@ const WeatherCardMeteoAM: React.FC<WeatherCardMeteoAMProps> = ({ weatherData, lo
             <div>
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
                 {provider}
+                {weatherDescription && weatherDescription.includes('(dati attuali') && (
+                  <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
+                    <Info className="w-2.5 h-2.5" />
+                    Attuali
+                  </span>
+                )}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {getDayLabel()}
@@ -190,6 +198,12 @@ const WeatherCardMeteoAM: React.FC<WeatherCardMeteoAMProps> = ({ weatherData, lo
                 {weatherDescription && (
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                     {weatherDescription}
+                    {weatherDescription.includes('(dati attuali') && (
+                      <span className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 mt-1">
+                        <Info className="w-3 h-3" />
+                        MeteoAM fornisce solo dati attuali, non previsioni
+                      </span>
+                    )}
                   </p>
                 )}
               </div>
@@ -220,10 +234,30 @@ const WeatherCardMeteoAM: React.FC<WeatherCardMeteoAMProps> = ({ weatherData, lo
               )}
             </div>
 
+            {/* Warning per assenza di dati previsionali */}
+            {hasDataWarning && (
+              <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                  <span className="text-sm text-orange-800 dark:text-orange-200 font-medium">
+                    Dati previsionali non disponibili
+                  </span>
+                </div>
+                <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                  MeteoAM fornisce solo dati meteorologici attuali, non previsioni per i giorni futuri.
+                </p>
+              </div>
+            )}
+
             {/* Footer */}
             <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Aggiornato: {lastUpdated}
+                Aggiornato: {new Date(lastUpdated).toLocaleString('it-IT', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </p>
             </div>
           </div>

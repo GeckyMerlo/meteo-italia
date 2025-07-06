@@ -5,14 +5,16 @@ import { createPortal } from 'react-dom';
 import { X, Sun, Cloud, CloudRain, Wind, Droplets, Thermometer, Eye, CloudSnow, Zap } from 'lucide-react';
 
 interface HourlyWeatherMeteoAM {
-  time: string;
+  hour: string;
+  timestamp: string;
+  temperature: number | null;
   condition: string;
-  temperature: string;
-  precipitation: string;
-  wind: string;
-  humidity: string;
-  feelsLike: string;
+  humidity: number | null;
+  wind: number | null;
+  windDirection: number | string | null;
+  pressure: number | null;
   icon: string;
+  precipitationProbability: number;
 }
 
 interface WeatherDetailsModalMeteoAMProps {
@@ -33,6 +35,8 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
   const [hourlyData, setHourlyData] = useState<HourlyWeatherMeteoAM[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasDataWarning, setHasDataWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -49,13 +53,19 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
       let dayParam: string;
       
       if (day === 'oggi') {
-        dayParam = '0';
+        dayParam = 'oggi';
       } else if (day === 'domani') {
-        dayParam = '1';
+        dayParam = 'domani';
+      } else if (day === 'dopodomani') {
+        dayParam = 'dopodomani';
       } else if (day.startsWith('+') && day.endsWith('giorni')) {
         // Estrai il numero da "+2giorni", "+3giorni", etc.
         const daysAhead = parseInt(day.replace('+', '').replace('giorni', ''));
-        dayParam = daysAhead.toString();
+        if (daysAhead === 2) {
+          dayParam = 'dopodomani';
+        } else {
+          dayParam = day;
+        }
       } else {
         // Fallback: prova a usare il valore direttamente
         dayParam = day;
@@ -67,27 +77,30 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
       const data = await response.json();
       
       if (response.ok) {
-        // Gestisci diversi formati di risposta dalle API MeteoAM
-        let hourlyEntries: HourlyWeatherMeteoAM[] = [];
-        
-        if (Array.isArray(data)) {
-          hourlyEntries = data;
-        } else if (data.hourlyData && Array.isArray(data.hourlyData)) {
-          hourlyEntries = data.hourlyData;
-        } else if (data.data && Array.isArray(data.data)) {
-          hourlyEntries = data.data;
-        }
-        
-        if (hourlyEntries.length > 0) {
-          setHourlyData(hourlyEntries);
+        // Gestisci la risposta specifica dell'API MeteoAM
+        if (data.hourlyData && Array.isArray(data.hourlyData)) {
+          // I dati sono già nel formato corretto dall'API MeteoAM
+          setHourlyData(data.hourlyData);
+          setHasDataWarning(data.hasDataWarning || false);
+          setWarningMessage(data.warningMessage || null);
+          setError(null);
+        } else if (Array.isArray(data)) {
+          // Fallback se i dati sono direttamente in un array
+          setHourlyData(data);
+          setHasDataWarning(false);
+          setWarningMessage(null);
           setError(null);
         } else {
           setHourlyData([]);
-          setError('Nessun dato orario disponibile per questo giorno su MeteoAM.');
+          setHasDataWarning(data.hasDataWarning || false);
+          setWarningMessage(data.warningMessage || null);
+          setError(data.hasDataWarning ? null : 'Nessun dato orario disponibile per questo giorno su MeteoAM.');
         }
       } else {
         setHourlyData([]);
-        setError('Errore nel caricamento dei dati orari da MeteoAM.');
+        setHasDataWarning(false);
+        setWarningMessage(null);
+        setError(data.error || 'Errore nel caricamento dei dati orari da MeteoAM.');
       }
     } catch (err) {
       console.error('[MeteoAM Modal] Errore nel caricamento dati orari:', err);
@@ -228,6 +241,26 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
             </div>
           )}
 
+          {/* Warning per assenza dati previsionali */}
+          {!loading && !error && hasDataWarning && (
+            <div className="text-center py-12">
+              <div className="text-orange-500 mb-4">
+                <Eye className="w-16 h-16 mx-auto" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                Dati previsionali non disponibili
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                {warningMessage || "MeteoAM fornisce solo dati meteorologici attuali, non previsioni per i giorni futuri."}
+              </p>
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-sm text-orange-700 dark:text-orange-300">
+                  💡 <strong>Suggerimento:</strong> Prova a visualizzare i dati per "oggi" per vedere le condizioni meteorologiche attuali.
+                </p>
+              </div>
+            </div>
+          )}
+
           {!loading && !error && hourlyData.length > 0 && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -239,24 +272,13 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
                     {/* Time and condition */}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                        {hour.time}
+                        {hour.hour}
                       </span>
                       {getWeatherIcon(hour.condition)}
                     </div>
 
-                    {/* Weather icon from MeteoAM */}
-                    {hour.icon && (
-                      <div className="flex justify-center mb-3">
-                        <img 
-                          src={hour.icon} 
-                          alt={hour.condition}
-                          className="w-12 h-12 object-contain"
-                        />
-                      </div>
-                    )}
-
                     {/* Condition */}
-                    <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 text-center">
+                    <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 text-center capitalize">
                       {hour.condition}
                     </div>
 
@@ -264,13 +286,8 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
                     <div className="flex items-center justify-center space-x-2 mb-3">
                       <Thermometer className="w-4 h-4 text-red-500" />
                       <span className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                        {hour.temperature}
+                        {hour.temperature !== null ? `${hour.temperature}°C` : 'N/A'}
                       </span>
-                      {hour.feelsLike && hour.feelsLike !== hour.temperature && (
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          (percepita: {hour.feelsLike})
-                        </span>
-                      )}
                     </div>
 
                     {/* Weather details */}
@@ -281,7 +298,7 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
                           <span className="text-gray-600 dark:text-gray-300">Precipitazioni</span>
                         </div>
                         <span className="text-gray-800 dark:text-gray-200 font-medium">
-                          {hour.precipitation}
+                          {hour.precipitationProbability}%
                         </span>
                       </div>
 
@@ -291,7 +308,12 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
                           <span className="text-gray-600 dark:text-gray-300">Vento</span>
                         </div>
                         <span className="text-gray-800 dark:text-gray-200 font-medium">
-                          {hour.wind}
+                          {hour.wind !== null ? `${hour.wind} km/h` : 'N/A'}
+                          {hour.windDirection && hour.windDirection !== 'VRB' && (
+                            <span className="text-xs text-gray-500 ml-1">
+                              {typeof hour.windDirection === 'number' ? `${hour.windDirection}°` : hour.windDirection}
+                            </span>
+                          )}
                         </span>
                       </div>
 
@@ -301,7 +323,7 @@ const WeatherDetailsModalMeteoAM: React.FC<WeatherDetailsModalMeteoAMProps> = ({
                           <span className="text-gray-600 dark:text-gray-300">Umidità</span>
                         </div>
                         <span className="text-gray-800 dark:text-gray-200 font-medium">
-                          {hour.humidity}
+                          {hour.humidity !== null ? `${hour.humidity}%` : 'N/A'}
                         </span>
                       </div>
                     </div>

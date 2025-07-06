@@ -20,6 +20,7 @@ interface WeatherData {
   status: 'success' | 'error' | 'unavailable';
   message?: string;
   lastUpdated: string;
+  hasDataWarning?: boolean; // Nuovo campo per il warning
 }
 
 interface ApiDayData {
@@ -51,15 +52,18 @@ interface ApiResponse {
     distance: number;
   };
   temperature?: number;
+  condition?: string;
   windSpeed?: number;
-  windDirection?: number;
+  windDirection?: number | string;
   pressure?: number;
   minMax?: {
     min: number | null;
     max: number | null;
+    hasRealData?: boolean;
   };
   source?: string;
   timestamp?: string;
+  isForecastDay?: boolean;
 }
 
 const HomePage = () => {
@@ -293,27 +297,96 @@ const HomePage = () => {
         
         // Chiama l'API reale per MeteoAM
         try {
-          const meteoAMResponse = await fetch(`/api/MeteoAM?cityName=${encodeURIComponent(selectedCity)}`);
+          const meteoAMResponse = await fetch(`/api/MeteoAM?cityName=${encodeURIComponent(selectedCity)}&day=${encodeURIComponent(selectedDay)}`);
           
           if (meteoAMResponse.ok) {
             const meteoAMData: ApiResponse = await meteoAMResponse.json();
             
             // Controlla se abbiamo ricevuto dati validi
             if (meteoAMData.temperature !== undefined && meteoAMData.temperature !== null) {
-              // Usa i dati min/max reali se disponibili, altrimenti calcola approssimazioni
-              const currentTemp = meteoAMData.temperature;
-              let minTemp: string = 'N/A';
-              let maxTemp: string = 'N/A';
+              // Per i giorni previsionali, verifica se ci sono dati reali
+              const shouldShowCard = !meteoAMData.isForecastDay || meteoAMData.minMax?.hasRealData;
               
-              if (meteoAMData.minMax?.min !== undefined && meteoAMData.minMax?.min !== null &&
-                  meteoAMData.minMax?.max !== undefined && meteoAMData.minMax?.max !== null) {
-                // Usa i valori reali min/max
-                minTemp = meteoAMData.minMax.min.toString();
-                maxTemp = meteoAMData.minMax.max.toString();
-              } else if (currentTemp !== undefined && currentTemp !== null) {
-                // Calcola approssimazioni se non disponibili i valori reali
-                minTemp = Math.round(currentTemp - 3).toString();
-                maxTemp = Math.round(currentTemp + 2).toString();
+              if (shouldShowCard) {
+                // Gestione temperature per giorni previsionali vs attuali
+                let minTemp: string = 'N/A';
+                let maxTemp: string = 'N/A';
+              
+              if (meteoAMData.isForecastDay) {
+                // Per i giorni previsionali, mostra solo dati reali o N/A
+                if (meteoAMData.minMax?.hasRealData && 
+                    meteoAMData.minMax?.min !== undefined && meteoAMData.minMax?.min !== null &&
+                    meteoAMData.minMax?.max !== undefined && meteoAMData.minMax?.max !== null) {
+                  // Dati min/max reali disponibili
+                  minTemp = `${meteoAMData.minMax.min}°C`;
+                  maxTemp = `${meteoAMData.minMax.max}°C`;
+                } else {
+                  // Nessun dato min/max reale per i giorni previsionali - mostra N/A
+                  minTemp = 'N/A';
+                  maxTemp = 'N/A';
+                }
+              } else {
+                // Per il giorno attuale, usa i valori disponibili
+                if (meteoAMData.minMax?.min !== undefined && meteoAMData.minMax?.min !== null &&
+                    meteoAMData.minMax?.max !== undefined && meteoAMData.minMax?.max !== null) {
+                  minTemp = `${meteoAMData.minMax.min}°C`;
+                  maxTemp = `${meteoAMData.minMax.max}°C`;
+                } else if (meteoAMData.temperature !== undefined && meteoAMData.temperature !== null) {
+                  // Per i dati attuali, mostra la temperatura attuale come principale
+                  minTemp = `${Math.round(meteoAMData.temperature - 3)}°C`;
+                  maxTemp = `${Math.round(meteoAMData.temperature)}°C (attuale)`;
+                }
+              }
+              
+              // Formatta la descrizione: per i giorni previsionali solo stazione, per oggi condizione + stazione
+              let description = '';
+              if (meteoAMData.isForecastDay) {
+                // Per i giorni previsionali, mostra solo la stazione
+                if (meteoAMData.station?.name) {
+                  description = `Stazione: ${meteoAMData.station.name}`;
+                  if (meteoAMData.station.distance) {
+                    description += ` (${meteoAMData.station.distance}km)`;
+                  }
+                } else {
+                  description = 'Dati attuali - MeteoAM non fornisce previsioni';
+                }
+                
+                // Aggiungi warning se non ci sono dati min/max reali
+                if (!meteoAMData.minMax?.hasRealData) {
+                  description += ' • ⚠️ Nessun dato previsionale disponibile';
+                }
+              } else {
+                // Per il giorno attuale, mostra condizione + stazione
+                description = `${meteoAMData.condition || 'Dati meteo'}`;
+                if (meteoAMData.station?.name) {
+                  description += ` • Stazione: ${meteoAMData.station.name}`;
+                  if (meteoAMData.station.distance) {
+                    description += ` (${meteoAMData.station.distance}km)`;
+                  }
+                }
+              }
+              
+              // Per i giorni previsionali, mostra solo dati reali o N/A
+              let windInfo = 'N/A';
+              let humidityInfo = 'N/A';
+              
+              if (!meteoAMData.isForecastDay) {
+                // Solo per il giorno attuale, mostra tutti i dettagli
+                if (meteoAMData.windSpeed) {
+                  windInfo = `${meteoAMData.windSpeed} km/h`;
+                  if (meteoAMData.windDirection && meteoAMData.windDirection !== 'VRB') {
+                    if (typeof meteoAMData.windDirection === 'number') {
+                      windInfo += ` ${meteoAMData.windDirection}°`;
+                    } else {
+                      windInfo += ` ${meteoAMData.windDirection}`;
+                    }
+                  }
+                }
+                humidityInfo = meteoAMData.humidity !== undefined ? `${meteoAMData.humidity}%` : 'N/A';
+              } else {
+                // Per i giorni previsionali, mostra N/A perché MeteoAM non fornisce previsioni
+                windInfo = 'N/A';
+                humidityInfo = 'N/A';
               }
               
               const weatherItem: WeatherData = {
@@ -323,15 +396,20 @@ const HomePage = () => {
                 day: selectedDay,
                 maxTemp: maxTemp,
                 minTemp: minTemp,
-                weatherDescription: `Dati da stazione ${meteoAMData.station?.name || 'MeteoAM'} (${meteoAMData.station?.distance || 0}km)`,
-                wind: meteoAMData.windSpeed ? `${meteoAMData.windSpeed} km/h` : 'N/A',
-                humidity: meteoAMData.humidity !== undefined ? `${meteoAMData.humidity}%` : 'N/A',
+                weatherDescription: description, // Solo condizione e stazione
+                wind: windInfo,
+                humidity: humidityInfo,
                 reliability: 'alta',
                 status: 'success' as const,
-                lastUpdated: new Date().toISOString()
+                lastUpdated: meteoAMData.timestamp || new Date().toISOString(),
+                hasDataWarning: meteoAMData.isForecastDay && !meteoAMData.minMax?.hasRealData
               };
               
               weatherData.push(weatherItem);
+              } else {
+                // Non mostrare la card per i giorni futuri senza dati reali
+                console.log(`⚠️ MeteoAM: No real data for ${selectedDay}, skipping card`);
+              }
             } else {
               // Dati non disponibili o errore
               weatherData.push({
