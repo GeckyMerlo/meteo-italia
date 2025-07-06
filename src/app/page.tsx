@@ -1,7 +1,7 @@
 'use client';
 import SearchBar from '@/components/SearchBar';
 import DayTimeline from '@/components/DayTimeline';
-import WeatherCard from '@/components/WeatherCard';
+import SmartWeatherCard from '@/components/providers/SmartWeatherCard';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 import { useState, useEffect } from 'react';
 
@@ -544,7 +544,7 @@ const HomePage = () => {
               {loading ? (
                 // Loading skeletons
                 Array.from({ length: 4 }).map((_, index) => (
-                  <WeatherCard 
+                  <SmartWeatherCard 
                     key={`skeleton-${index}`}
                     weatherData={{
                       provider: `Provider ${index + 1}`,
@@ -566,7 +566,7 @@ const HomePage = () => {
                       animation: 'fadeInUp 0.6s ease-out forwards'
                     }}
                   >
-                    <WeatherCard 
+                    <SmartWeatherCard 
                       weatherData={data}
                       loading={false}
                     />
