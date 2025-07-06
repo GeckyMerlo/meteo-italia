@@ -7,9 +7,20 @@ import { useState, useEffect } from 'react';
 
 interface WeatherData {
   provider: string;
-  providerLogo?: string;
   city: string;
-  day: string;
+  
+  // New format (for new APIs like MeteoIT)
+  cityCode?: string;
+  days?: Array<{
+    day: number;
+    temperature: string;
+    condition: string;
+    href: string;
+  }>;
+  
+  // Legacy format (for backward compatibility)
+  providerLogo?: string;
+  day?: string;
   maxTemp?: string;
   minTemp?: string;
   weatherIconUrl?: string;
@@ -448,28 +459,58 @@ const HomePage = () => {
           });
         }
         
-        // Aggiungi altri provider con dati mock per ora (escluso MeteoAM che è già implementato)
-        const mockProviders = [
-          { name: 'Meteo.it', logo: '☀️', color: 'purple' }
-        ];
-        
-        mockProviders.forEach(provider => {
+        // Chiama l'API reale per Meteo.it
+        try {
+          const meteoITResponse = await fetch(`/api/MeteoIT?city=${encodeURIComponent(selectedCity.toLowerCase())}`);
+          
+          if (meteoITResponse.ok) {
+            const meteoITData = await meteoITResponse.json();
+            
+            // Nuovo formato con days array
+            if (meteoITData.provider === 'meteo.it' && meteoITData.days && Array.isArray(meteoITData.days)) {
+              // Passa tutto l'oggetto con il nuovo formato
+              weatherData.push({
+                provider: 'Meteo.it',
+                city: selectedCity,
+                cityCode: meteoITData.cityCode,
+                days: meteoITData.days,
+                status: 'success',
+                lastUpdated: new Date().toISOString()
+              });
+            } else {
+              // Formato dati non riconosciuto o errore
+              weatherData.push({
+                provider: 'Meteo.it',
+                city: selectedCity,
+                day: selectedDay,
+                status: 'error',
+                message: 'Formato dati non riconosciuto',
+                lastUpdated: new Date().toISOString()
+              });
+            }
+          } else {
+            // Errore HTTP
+            const errorData = await meteoITResponse.json().catch(() => ({}));
+            weatherData.push({
+              provider: 'Meteo.it',
+              city: selectedCity,
+              day: selectedDay,
+              status: 'error',
+              message: errorData.error || `Errore ${meteoITResponse.status}`,
+              lastUpdated: new Date().toISOString()
+            });
+          }
+        } catch (apiError) {
+          // Errore nella chiamata API
           weatherData.push({
-            provider: provider.name,
-            providerLogo: provider.logo,
+            provider: 'Meteo.it',
             city: selectedCity,
             day: selectedDay,
-            maxTemp: (15 + Math.floor(Math.random() * 15)).toString(),
-            minTemp: (5 + Math.floor(Math.random() * 10)).toString(),
-            weatherDescription: 'Dati non disponibili',
-            wind: `${10 + Math.floor(Math.random() * 20)} km/h`,
-            humidity: `${40 + Math.floor(Math.random() * 40)}%`,
-            reliability: 'media',
-            status: 'unavailable',
-            message: 'Implementazione in corso',
+            status: 'error',
+            message: 'Errore di connessione a Meteo.it',
             lastUpdated: new Date().toISOString()
           });
-        });
+        }
         
         setWeatherData(weatherData);
       } catch (err) {

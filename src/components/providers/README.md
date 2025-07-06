@@ -46,8 +46,9 @@ src/components/providers/
 ### Meteo.it
 - **Colore**: Viola (`from-purple-500 to-purple-600`)
 - **Icona**: 📊
-- **Specialità**: In fase di sviluppo
-- **API**: Da implementare
+- **Specialità**: Previsioni giornaliere complete con supporto per previsioni orarie
+- **API**: `/api/MeteoIT` e `/api/MeteoIT/orari`
+- **Formato**: Nuovo formato con array `days` per previsioni multiple
 
 ## Componenti Principali
 

@@ -17,9 +17,20 @@ export { default as SmartWeatherCard } from './SmartWeatherCard';
 // Tipi condivisi
 export interface WeatherData {
   provider: string;
-  providerLogo?: string;
   city: string;
-  day: string;
+  
+  // New format (for new APIs like MeteoIT)
+  cityCode?: string;
+  days?: Array<{
+    day: number;
+    temperature: string;
+    condition: string;
+    href: string;
+  }>;
+  
+  // Legacy format (for backward compatibility)
+  providerLogo?: string;
+  day?: string;
   maxTemp?: string;
   minTemp?: string;
   weatherIconUrl?: string;

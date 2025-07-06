@@ -45,14 +45,18 @@ const WeatherDetailsModalMeteoIT: React.FC<WeatherDetailsModalMeteoITProps> = ({
     setError(null);
     
     try {
-      // Per ora Meteo.it non ha un'API oraria implementata
-      // Mostriamo un messaggio informativo
-      setHourlyData([]);
-      setError('Le previsioni orarie per Meteo.it non sono ancora disponibili. Stiamo lavorando per implementarle presto!');
+      const response = await fetch(`/api/MeteoIT/orari?city=${encodeURIComponent(city)}&day=${day}`);
+      const data = await response.json();
+      
+      if (response.ok && data.hourlyData) {
+        setHourlyData(data.hourlyData);
+      } else {
+        throw new Error(data.error || 'Errore nel caricamento dei dati orari');
+      }
     } catch (err) {
-      console.error('[Meteo.it Modal] Errore nel caricamento dati orari:', err);
+      console.error('Errore caricamento dati orari Meteo.it:', err);
+      setError(err instanceof Error ? err.message : 'Errore sconosciuto');
       setHourlyData([]);
-      setError(`Errore di rete: ${err instanceof Error ? err.message : 'Errore sconosciuto'}.`);
     } finally {
       setLoading(false);
     }
@@ -92,115 +96,189 @@ const WeatherDetailsModalMeteoIT: React.FC<WeatherDetailsModalMeteoITProps> = ({
 
   const getDayLabel = () => {
     switch (day) {
-      case 'oggi':
+      case '0':
         return 'Oggi';
-      case 'domani':
+      case '1':
         return 'Domani';
       default:
-        return day;
+        return `Giorno ${day}`;
     }
   };
 
-  // Handle backdrop click
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
+  const getWeatherIcon = (condition: string) => {
+    const conditionLower = condition.toLowerCase();
+    if (conditionLower.includes('soleggiato') || conditionLower.includes('sereno')) {
+      return '☀️';
+    } else if (conditionLower.includes('nuvoloso')) {
+      return '☁️';
+    } else if (conditionLower.includes('pioggia')) {
+      return '🌧️';
+    } else if (conditionLower.includes('temporale')) {
+      return '⛈️';
+    } else if (conditionLower.includes('neve')) {
+      return '❄️';
+    }
+    return '🌤️';
+  };
+
   const modalContent = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={handleBackdropClick}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      onClick={handleBackdropClick}
+    >
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-          <div className="flex items-center space-x-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              📊
+        <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-t-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                📊
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Meteo.it - Previsioni Orarie</h2>
+                <div className="flex items-center space-x-4 text-purple-100 text-sm">
+                  <span>📍 {city}</span>
+                  <span>📅 {getDayLabel()}</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-bold">Meteo.it</h2>
-              <p className="text-purple-100">Previsioni orarie dettagliate</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4 text-sm text-purple-100">
-            <span>📍 {city}</span>
-            <span>📅 {getDayLabel()}</span>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6">
           {loading && (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-300">Caricamento dati orari...</span>
+              <span className="ml-4 text-gray-600 dark:text-gray-400">
+                Caricamento previsioni orarie...
+              </span>
             </div>
           )}
 
           {error && (
-            <div className="text-center py-12">
-              <div className="text-purple-500 mb-4">
-                <Cloud className="w-16 h-16 mx-auto" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                Funzionalità in arrivo
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {error}
-              </p>
-              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 mb-4">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">!</span>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-1">
-                      Sviluppo in corso
-                    </h4>
-                    <p className="text-purple-700 dark:text-purple-300 text-sm">
-                      Le previsioni orarie di Meteo.it saranno presto disponibili. Nel frattempo, 
-                      puoi utilizzare le previsioni giornaliere o provare gli altri servizi meteo.
-                    </p>
-                  </div>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <X className="w-5 h-5 text-red-500 mr-3" />
+                <div>
+                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                    Errore nel caricamento
+                  </h3>
+                  <p className="text-sm text-red-600 dark:text-red-300 mt-1">
+                    {error}
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
-          {!loading && !error && hourlyData.length > 0 && (
-            <div className="space-y-4">
-              {/* Questo blocco sarà implementato quando avremo l'API */}
-              <div className="text-center py-8">
-                <p className="text-gray-600 dark:text-gray-300">
-                  Dati orari non ancora disponibili
-                </p>
-              </div>
+          {!loading && !error && hourlyData.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📊</div>
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
+                Previsioni orarie non disponibili
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Meteo.it non fornisce previsioni orarie dettagliate per questa località.
+              </p>
             </div>
           )}
 
-          {/* Info footer */}
-          <div className="mt-8 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-            <div className="flex items-center space-x-2 text-sm text-purple-700 dark:text-purple-300">
-              <Eye className="w-4 h-4" />
-              <span>
-                Meteo.it - Previsioni in fase di sviluppo
-              </span>
+          {!loading && hourlyData.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                Previsioni per {getDayLabel()}
+              </h3>
+              <div className="grid gap-3">
+                {hourlyData.map((hour, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-center">
+                      {/* Ora */}
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-gray-800 dark:text-gray-200">
+                          {hour.time}
+                        </span>
+                      </div>
+
+                      {/* Condizione */}
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xl">{getWeatherIcon(hour.condition)}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-300 hidden md:block">
+                          {hour.condition}
+                        </span>
+                      </div>
+
+                      {/* Temperatura */}
+                      <div className="flex items-center space-x-1">
+                        <Thermometer className="w-4 h-4 text-red-500" />
+                        <span className="font-medium text-gray-800 dark:text-gray-200">
+                          {hour.temperature}
+                        </span>
+                      </div>
+
+                      {/* Vento */}
+                      <div className="flex items-center space-x-1">
+                        <Wind className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                          {hour.wind}
+                        </span>
+                      </div>
+
+                      {/* Umidità */}
+                      <div className="flex items-center space-x-1">
+                        <Droplets className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                          {hour.humidity}
+                        </span>
+                      </div>
+
+                      {/* Precipitazioni */}
+                      <div className="flex items-center space-x-1">
+                        <CloudRain className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                          {hour.precipitation}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 rounded-b-xl">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span>Dati forniti da Meteo.it</span>
+            <span>📊 Provider meteo specializzato</span>
           </div>
         </div>
       </div>
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  // Render using portal
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return null;
 };
 
 export default WeatherDetailsModalMeteoIT;
