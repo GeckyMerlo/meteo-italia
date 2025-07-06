@@ -341,28 +341,21 @@ export async function GET(request: NextRequest) {
       let finalData = sortedData;
       
       if (!isCurrentDay) {
-        // Per i giorni futuri, mostra solo i dati reali disponibili (nessun completamento)
-        console.log('Processing future day - showing only real data available');
-        finalData = sortedData;
-        console.log(`Future day: returning ${finalData.length} real hourly entries`);
-      } else {
-        // Per il giorno corrente, usa solo i dati disponibili dall'ora attuale in poi (inclusi minuti)
-        // Calcola orario attuale in formato HH:mm
-        const nowRome = new Date().toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Rome' });
-        const [currentHourStr, currentMinuteStr] = nowRome.split(':');
-        const currentHourMinute = parseInt(currentHourStr, 10) * 60 + parseInt(currentMinuteStr, 10);
-        console.log(`Current day - showing hours from ${nowRome} onwards (minuti inclusi)`);
+        // Per i giorni futuri, mostra tutti gli orari dalle 00:00 alle 23:59
+        console.log('Processing future day - showing all hours from 00:00 to 23:59');
         finalData = sortedData.filter(item => {
-          const [itemHourStr, itemMinuteStr] = item.time.split(':');
-          const itemHour = parseInt(itemHourStr);
-          const itemMinute = parseInt(itemMinuteStr);
-          const nowMinute = parseInt(now.toLocaleString('it-IT', { minute: '2-digit', timeZone: 'Europe/Rome' }), 10);
-          // DEBUG: logga ogni confronto
-          const isAfter = itemHour > currentHour || (itemHour === currentHour && itemMinute >= nowMinute);
-          console.log(`DEBUG - Ora card: ${item.time} (${itemHour}:${itemMinute}) >= ${currentHour}:${nowMinute} ?`, isAfter);
-          return isAfter;
+          const hour = parseInt(item.time.split(':')[0]);
+          return hour >= 0 && hour <= 23;
         });
-        console.log(`Current day filtered to ${finalData.length} hours`);
+        console.log(`Future day: returning ${finalData.length} real hourly entries (filtered 00:00-23:59)`);
+      } else {
+        // Per il giorno corrente, mostra tutti gli orari disponibili dalle 00:00 alle 23:59
+        console.log('Current day - showing all available hours from 00:00 to 23:59');
+        finalData = sortedData.filter(item => {
+          const hour = parseInt(item.time.split(':')[0]);
+          return hour >= 0 && hour <= 23;
+        });
+        console.log(`Current day: returning ${finalData.length} total hourly entries (filtered 00:00-23:59)`);
       }
       
       console.log(`Returning ${finalData.length} real hourly entries`);
@@ -371,8 +364,54 @@ export async function GET(request: NextRequest) {
     
     console.warn('No hourly data found on the website');
     
-    // Restituisci un array vuoto invece di dati mock
-    return NextResponse.json([]);
+    // Se non troviamo dati orari, genera fasce orarie di fallback
+    console.log('Generating fallback time periods...');
+    
+    const fallbackPeriods: HourlyWeather[] = [
+      {
+        time: '03:00',
+        condition: 'Previsioni non disponibili',
+        temperature: 'N/A',
+        precipitation: 'N/A',
+        wind: 'N/A',
+        humidity: 'N/A',
+        feelsLike: 'N/A',
+        icon: ''
+      },
+      {
+        time: '09:00',
+        condition: 'Previsioni non disponibili',
+        temperature: 'N/A',
+        precipitation: 'N/A',
+        wind: 'N/A',
+        humidity: 'N/A',
+        feelsLike: 'N/A',
+        icon: ''
+      },
+      {
+        time: '15:00',
+        condition: 'Previsioni non disponibili',
+        temperature: 'N/A',
+        precipitation: 'N/A',
+        wind: 'N/A',
+        humidity: 'N/A',
+        feelsLike: 'N/A',
+        icon: ''
+      },
+      {
+        time: '21:00',
+        condition: 'Previsioni non disponibili',
+        temperature: 'N/A',
+        precipitation: 'N/A',
+        wind: 'N/A',
+        humidity: 'N/A',
+        feelsLike: 'N/A',
+        icon: ''
+      }
+    ];
+    
+    console.log(`Returning ${fallbackPeriods.length} fallback time periods`);
+    return NextResponse.json(fallbackPeriods);
     
   } catch (error) {
     console.error('Error in hourly weather API:', error);

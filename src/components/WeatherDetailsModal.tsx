@@ -50,20 +50,15 @@ const WeatherDetailsModal: React.FC<WeatherDetailsModalProps> = ({
     try {
       // Converti il giorno selezionato nel formato corretto per l'API oraria
       let dayParam: string;
-      const today = new Date();
       
       if (day === 'oggi') {
-        dayParam = today.getDate().toString();
+        dayParam = '0';
       } else if (day === 'domani') {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        dayParam = tomorrow.getDate().toString();
+        dayParam = '1';
       } else if (day.startsWith('+') && day.endsWith('giorni')) {
         // Estrai il numero da "+2giorni", "+3giorni", etc.
         const daysAhead = parseInt(day.replace('+', '').replace('giorni', ''));
-        const targetDate = new Date(today);
-        targetDate.setDate(today.getDate() + daysAhead);
-        dayParam = targetDate.getDate().toString();
+        dayParam = daysAhead.toString();
       } else {
         // Fallback: prova a usare il valore direttamente
         dayParam = day;
