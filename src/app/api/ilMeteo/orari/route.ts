@@ -14,43 +14,55 @@ interface HourlyWeather {
   icon: string;
 }
 
-// Funzione per calcolare l'offset del giorno per ilMeteo
-// ilMeteo usa: 0 = oggi, 1 = domani, 2 = dopodomani, etc.
-function getDayOffset(requestedDay: number): number {
-  const today = new Date();
-  const todayDay = today.getDate();
-  
-  // Se il giorno richiesto è oggi, usa 0
-  if (requestedDay === todayDay) {
-    return 0;
+// Funzione per dedurre le condizioni meteo dai dati di precipitazione
+function getConditionFromPrecipitation(precipitation: string): string {
+  if (!precipitation || precipitation.trim() === '') {
+    return 'Condizione non disponibile';
   }
   
-  // Se il giorno richiesto è domani, usa 1
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  if (requestedDay === tomorrow.getDate()) {
-    return 1;
+  const precip = precipitation.toLowerCase();
+  
+  // Nessuna precipitazione
+  if (precip.includes('assenti') || precip.includes('0') || precip.includes('no')) {
+    return 'Sereno';
   }
   
-  // Se il giorno richiesto è dopodomani, usa 2
-  const dayAfterTomorrow = new Date(today);
-  dayAfterTomorrow.setDate(today.getDate() + 2);
-  if (requestedDay === dayAfterTomorrow.getDate()) {
-    return 2;
+  // Precipitazioni leggere
+  if (precip.includes('modeste') || precip.includes('deboli') || precip.includes('leggere')) {
+    return 'Pioggia leggera';
   }
   
-  // Per i giorni successivi, calcola l'offset
-  // Supporta fino a 7 giorni nel futuro
-  for (let i = 3; i <= 7; i++) {
-    const futureDate = new Date(today);
-    futureDate.setDate(today.getDate() + i);
-    if (requestedDay === futureDate.getDate()) {
-      return i;
-    }
+  // Precipitazioni moderate
+  if (precip.includes('consistenti') || precip.includes('moderate')) {
+    return 'Pioggia moderata';
   }
   
-  // Se non trova corrispondenza, restituisce -1
-  return -1;
+  // Precipitazioni forti
+  if (precip.includes('abbondanti') || precip.includes('intense') || precip.includes('forti')) {
+    return 'Pioggia intensa';
+  }
+  
+  // Precipitazioni molto forti
+  if (precip.includes('molto abbondanti') || precip.includes('violente')) {
+    return 'Pioggia molto intensa';
+  }
+  
+  // Neve
+  if (precip.includes('neve') || precip.includes('nevicate')) {
+    return 'Neve';
+  }
+  
+  // Temporali
+  if (precip.includes('temporali') || precip.includes('storm')) {
+    return 'Temporale';
+  }
+  
+  // Fallback: se contiene mm indica pioggia
+  if (precip.includes('mm')) {
+    return 'Pioggia';
+  }
+  
+  return 'Variabile';
 }
 
 export async function GET(request: NextRequest) {
@@ -59,24 +71,28 @@ export async function GET(request: NextRequest) {
     const city = searchParams.get('city') || 'milano';
     const day = searchParams.get('day') || '0';
     
-    console.log(`Fetching hourly data for city: ${city}, day: ${day}`);
+    console.log(`[ilMeteo] Fetching hourly data for city: ${city}, day: ${day}`);
     
-    // Converti sempre il giorno del mese in offset
-    const dayOffset = getDayOffset(Number(day));
-    if (dayOffset === -1) {
-      return NextResponse.json({ error: 'Giorno non valido o non supportato' }, { status: 404 });
+    // Il parametro day ora è un offset: 0=oggi, 1=domani, 2=dopodomani, etc.
+    const dayOffset = parseInt(day);
+    
+    // Verifica che l'offset sia valido (0-7 giorni)
+    if (isNaN(dayOffset) || dayOffset < 0 || dayOffset > 7) {
+      return NextResponse.json({ error: 'Offset giorno non valido (0-7)' }, { status: 404 });
     }
     
-    // Usa il pattern /meteo/citta/numerogiorno
+    // Usa direttamente l'offset per l'URL di ilMeteo
     const url = `https://www.ilmeteo.it/meteo/${city}/${dayOffset}`;
-    console.log(`Fetching URL: ${url}`);
+    console.log(`[ilMeteo] Fetching URL: ${url}`);
     
     // Fetch della pagina
     const { data: html } = await axios.get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
       },
-      timeout: 10_000
+      timeout: 10_000,
+      responseType: 'text',
+      responseEncoding: 'utf8'
     });
     
     const $ = cheerio.load(html);
@@ -86,43 +102,75 @@ export async function GET(request: NextRequest) {
     
     // Trova la prima tabella (quella con i dettagli orari)
     const table = $('table').first();
-    if (table.length > 0) {
-      // Analizza le righe della tabella (salta header)
-      table.find('tr').slice(2).each((_, row) => {
-        const cells = $(row).find('td, th').map((_, cell) => $(cell).text().trim()).get();
+    if (table.length > 0) {    // Analizza le righe della tabella (salta header)
+    table.find('tr').slice(2).each((_, row) => {
+      const cells = $(row).find('td, th').map((_, cell) => $(cell).text().trim()).get();
+      
+      if (cells.length >= 10) {
+        const time = cells[0]; // Colonna 0: Ora
+        const condition = cells[1]; // Colonna 1: Condizione
+        const temperature = cells[2]; // Colonna 2: Temperatura
+        const precipitation = cells[3]; // Colonna 3: Precipitazioni
+        const wind = cells[5]; // Colonna 5: Vento
+        const feelsLike = cells[7]; // Colonna 7: Temperatura percepita
+        const humidity = cells[9]; // Colonna 9: Umidità
         
-        if (cells.length >= 10) {
-          const time = cells[0]; // Colonna 0: Ora
-          const condition = cells[1]; // Colonna 1: Condizione
-          const temperature = cells[2]; // Colonna 2: Temperatura
-          const precipitation = cells[3]; // Colonna 3: Precipitazioni
-          const wind = cells[5]; // Colonna 5: Vento
-          const feelsLike = cells[7]; // Colonna 7: Temperatura percepita
-          const humidity = cells[9]; // Colonna 9: Umidità
+        // Verifica se l'ora è valida (formato HH:MM o HH)
+        const timeMatch = time.match(/^(\d{1,2}):?(\d{2})?$/);
+        if (timeMatch) {
+          const formattedTime = timeMatch[2] ? `${timeMatch[1]}:${timeMatch[2]}` : `${timeMatch[1]}:00`;
           
-          // Verifica se l'ora è valida (formato HH:MM o HH)
-          const timeMatch = time.match(/^(\d{1,2}):?(\d{2})?$/);
-          if (timeMatch) {
-            const formattedTime = timeMatch[2] ? `${timeMatch[1]}:${timeMatch[2]}` : `${timeMatch[1]}:00`;
-            
-            // Trova l'icona nella cella della condizione
-            const conditionCell = $(row).find('td').eq(1);
-            const iconElement = conditionCell.find('img');
-            const icon = iconElement.attr('src') || '';
-            
-            hourlyData.push({
-              time: formattedTime,
-              condition: condition || 'N/A',
-              temperature: temperature || 'N/A',
-              precipitation: precipitation || 'N/A',
-              wind: wind || 'N/A',
-              humidity: humidity ? `${humidity}%` : 'N/A',
-              feelsLike: feelsLike || 'N/A',
-              icon: icon.startsWith('http') ? icon : `https://www.ilmeteo.it${icon}`
-            });
+          // Trova l'icona e la condizione nella cella della condizione
+          const conditionCell = $(row).find('td').eq(1);
+          const iconElement = conditionCell.find('img');
+          const icon = iconElement.attr('src') || '';
+          
+          // Migliora l'estrazione della condizione: usa l'attributo alt dell'icona o title
+          let extractedCondition = condition;
+          if (!extractedCondition || extractedCondition.trim() === '') {
+            // Prova a estrarre dall'attributo alt dell'icona
+            const altText = iconElement.attr('alt');
+            if (altText && altText.trim() !== '') {
+              extractedCondition = altText;
+            } else {
+              // Prova a estrarre dall'attributo title dell'icona
+              const titleText = iconElement.attr('title');
+              if (titleText && titleText.trim() !== '') {
+                extractedCondition = titleText;
+              } else {
+                // Deduce la condizione dai dati di precipitazione
+                extractedCondition = getConditionFromPrecipitation(precipitation);
+              }
+            }
           }
+          
+          // Pulisce e formatta la temperatura
+          const cleanTemperature = temperature ? temperature.replace(/[^\d.-]/g, '') : '';
+          const cleanFeelsLike = feelsLike ? feelsLike.replace(/[^\d.-]/g, '') : '';
+          
+          // Pulisce e formatta l'umidità
+          const cleanHumidity = humidity ? humidity.replace(/[^\d]/g, '') : '';
+          
+          // Pulisce i dati da caratteri di codifica problematici
+          const cleanWind = wind ? wind.replace(/[^\w\s\/\-àèéìòùÀÈÉÌÒÙ]/g, ' ').trim() : '';
+          const cleanPrecipitation = precipitation ? precipitation.replace(/[^\w\s\-àèéìòùÀÈÉÌÒÙ]/g, ' ').trim() : '';
+          
+          // Migliora l'estrazione dell'icona
+          const fullIconUrl = icon ? (icon.startsWith('http') ? icon : `https://www.ilmeteo.it${icon}`) : '';
+          
+          hourlyData.push({
+            time: formattedTime,
+            condition: extractedCondition || 'Condizione non disponibile',
+            temperature: cleanTemperature !== '' ? `${cleanTemperature}°C` : 'N/A',
+            precipitation: cleanPrecipitation || 'N/A',
+            wind: cleanWind || 'N/A',
+            humidity: cleanHumidity !== '' ? `${cleanHumidity}%` : 'N/A',
+            feelsLike: cleanFeelsLike !== '' ? `${cleanFeelsLike}°C` : 'N/A',
+            icon: fullIconUrl
+          });
         }
-      });
+      }
+    });
     }
     
     // Filtra e pulisce i dati orari
@@ -130,6 +178,8 @@ export async function GET(request: NextRequest) {
       const now = new Date();
       const currentHour = now.getHours();
       const nextHour = (currentHour + 1) % 24;
+      
+      console.log(`[ilMeteo] Current hour: ${currentHour}, filtering for dayOffset: ${dayOffset}`);
       
       // Prima: filtra per ore valide (0-23) e aggiungi numero ora per ordinamento
       const validHours = hourlyData.filter(hour => {
@@ -141,7 +191,7 @@ export async function GET(request: NextRequest) {
         // Salta ore non valide (>= 24)
         if (hourNum >= 24) return false;
         
-        // Per oggi, mostra solo dall'ora successiva alle 23:00
+        // Per oggi (dayOffset = 0), mostra solo dall'ora successiva alle 23:00
         if (dayOffset === 0) {
           return hourNum >= nextHour && hourNum <= 23;
         } else {
@@ -156,8 +206,8 @@ export async function GET(request: NextRequest) {
       // Seconda: ordina per ora
       validHours.sort((a, b) => a.hourNum - b.hourNum);
       
-      console.log(`Valid hours (first 5): ${validHours.slice(0, 5).map(h => h.time).join(', ')}`);
-      console.log(`Valid hours (last 5): ${validHours.slice(-5).map(h => h.time).join(', ')}`);
+      console.log(`[ilMeteo] Valid hours (first 5): ${validHours.slice(0, 5).map(h => h.time).join(', ')}`);
+      console.log(`[ilMeteo] Valid hours (last 5): ${validHours.slice(-5).map(h => h.time).join(', ')}`);
       
       // Terzo: rimuovi duplicati (mantenendo il primo di ogni ora)
       const seenHours = new Set();
@@ -174,50 +224,69 @@ export async function GET(request: NextRequest) {
         return cleanHour;
       });
       
-      console.log(`Filtered hourly data: ${hourlyData.length} -> ${finalData.length} entries`);
-      console.log(`Final data (first 5): ${finalData.slice(0, 5).map(h => h.time).join(', ')}`);
-      console.log(`Final data (last 5): ${finalData.slice(-5).map(h => h.time).join(', ')}`);
+      console.log(`[ilMeteo] Filtered hourly data: ${hourlyData.length} -> ${finalData.length} entries`);
+      console.log(`[ilMeteo] Final data (first 5): ${finalData.slice(0, 5).map(h => h.time).join(', ')}`);
+      console.log(`[ilMeteo] Final data (last 5): ${finalData.slice(-5).map(h => h.time).join(', ')}`);
       
       // Sostituisci i dati originali con quelli filtrati
       hourlyData.length = 0;
       hourlyData.push(...finalData);
     }
     
-    // Se non troviamo dati orari, restituiamo dati fittizi per fasce orarie
+    // Se non troviamo dati orari, restituiamo un fallback con fasce orarie
     if (hourlyData.length === 0) {
-      console.log('No hourly data found, returning time periods');
+      console.log('[ilMeteo] No hourly data found, returning fallback time periods');
       
-      // Genera fasce orarie basiche
-      const timePeriods = [
-        { time: '06:00-12:00', label: 'Mattina' },
-        { time: '12:00-18:00', label: 'Pomeriggio' },
-        { time: '18:00-24:00', label: 'Sera' },
-        { time: '00:00-06:00', label: 'Notte' }
-      ];
-      
-      timePeriods.forEach(period => {
-        hourlyData.push({
-          time: period.time,
-          condition: 'Previsioni generali',
+      // Genera fasce orarie di fallback come 3bMeteo
+      const fallbackPeriods = [
+        {
+          time: '03:00',
+          condition: 'Previsioni non disponibili',
           temperature: 'N/A',
           precipitation: 'N/A',
           wind: 'N/A',
           humidity: 'N/A',
           feelsLike: 'N/A',
           icon: ''
-        });
-      });
+        },
+        {
+          time: '09:00',
+          condition: 'Previsioni non disponibili',
+          temperature: 'N/A',
+          precipitation: 'N/A',
+          wind: 'N/A',
+          humidity: 'N/A',
+          feelsLike: 'N/A',
+          icon: ''
+        },
+        {
+          time: '15:00',
+          condition: 'Previsioni non disponibili',
+          temperature: 'N/A',
+          precipitation: 'N/A',
+          wind: 'N/A',
+          humidity: 'N/A',
+          feelsLike: 'N/A',
+          icon: ''
+        },
+        {
+          time: '21:00',
+          condition: 'Previsioni non disponibili',
+          temperature: 'N/A',
+          precipitation: 'N/A',
+          wind: 'N/A',
+          humidity: 'N/A',
+          feelsLike: 'N/A',
+          icon: ''
+        }
+      ];
+      
+      hourlyData.push(...fallbackPeriods);
     }
     
-    console.log(`Found ${hourlyData.length} hourly entries`);
+    console.log(`[ilMeteo] Found ${hourlyData.length} hourly entries`);
 
-    return NextResponse.json({
-      provider: 'ilmeteo',
-      city: city,
-      day: parseInt(day),
-      hourlyData: hourlyData,
-      dataType: hourlyData.length > 0 && hourlyData[0].time.includes('-') ? 'fasce' : 'orarie'
-    });
+    return NextResponse.json(hourlyData);
     
   } catch (error) {
     console.error('Error fetching hourly data:', error);
