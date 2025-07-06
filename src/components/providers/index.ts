@@ -8,9 +8,6 @@ export { default as WeatherDetailsModalIlMeteo } from './ilmeteo/WeatherDetailsM
 export { default as WeatherCardMeteoAM } from './meteoam/WeatherCardMeteoAM';
 export { default as WeatherDetailsModalMeteoAM } from './meteoam/WeatherDetailsModalMeteoAM';
 
-export { default as WeatherCardMeteoIT } from './meteoit/WeatherCardMeteoIT';
-export { default as WeatherDetailsModalMeteoIT } from './meteoit/WeatherDetailsModalMeteoIT';
-
 // Componente smart che seleziona automaticamente il componente giusto
 export { default as SmartWeatherCard } from './SmartWeatherCard';
 

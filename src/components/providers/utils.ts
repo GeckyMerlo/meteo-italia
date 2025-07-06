@@ -2,11 +2,9 @@ import {
   WeatherCard3BMeteo, 
   WeatherCardIlMeteo, 
   WeatherCardMeteoAM, 
-  WeatherCardMeteoIT,
   WeatherDetailsModal3BMeteo,
   WeatherDetailsModalIlMeteo,
-  WeatherDetailsModalMeteoAM,
-  WeatherDetailsModalMeteoIT
+  WeatherDetailsModalMeteoAM
 } from './index';
 
 // Utility per determinare quale componente Weather Card usare
@@ -19,8 +17,6 @@ export const getWeatherCardComponent = (provider: string) => {
     return WeatherCardIlMeteo;
   } else if (providerName.includes('meteoam')) {
     return WeatherCardMeteoAM;
-  } else if (providerName.includes('meteo.it')) {
-    return WeatherCardMeteoIT;
   }
   
   // Fallback al componente 3B Meteo
@@ -37,8 +33,6 @@ export const getWeatherModalComponent = (provider: string) => {
     return WeatherDetailsModalIlMeteo;
   } else if (providerName.includes('meteoam')) {
     return WeatherDetailsModalMeteoAM;
-  } else if (providerName.includes('meteo.it')) {
-    return WeatherDetailsModalMeteoIT;
   }
   
   // Fallback al componente 3B Meteo
@@ -66,12 +60,6 @@ export const getProviderStyle = (provider: string) => {
       gradient: 'from-red-500 to-red-600',
       logoPath: '/images/AMLogo.gif',
       accentColor: 'red'
-    };
-  } else if (providerName.includes('meteo.it')) {
-    return {
-      gradient: 'from-purple-500 to-purple-600',
-      logoEmoji: '📊',
-      accentColor: 'purple'
     };
   }
   

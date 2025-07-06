@@ -15,9 +15,6 @@ src/components/providers/
 ├── meteoam/
 │   ├── WeatherCardMeteoAM.tsx          # Card specializzata per MeteoAM
 │   └── WeatherDetailsModalMeteoAM.tsx  # Modal orari per MeteoAM
-├── meteoit/
-│   ├── WeatherCardMeteoIT.tsx          # Card specializzata per Meteo.it
-│   └── WeatherDetailsModalMeteoIT.tsx  # Modal orari per Meteo.it
 ├── SmartWeatherCard.tsx                # Componente intelligente che seleziona automaticamente
 ├── utils.ts                            # Funzioni utility per i provider
 └── index.ts                            # Esportazioni principali
@@ -42,12 +39,6 @@ src/components/providers/
 - **Icona**: 🇮🇹
 - **Specialità**: Dati ufficiali Aeronautica Militare
 - **API**: `/api/MeteoAM/orari`
-
-### Meteo.it
-- **Colore**: Viola (`from-purple-500 to-purple-600`)
-- **Icona**: 📊
-- **Specialità**: In fase di sviluppo
-- **API**: Da implementare
 
 ## Componenti Principali
 

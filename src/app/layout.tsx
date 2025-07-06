@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Meteo Italia | Confronta le previsioni meteorologiche",
-  description: "Confronta le previsioni del tempo dai principali provider meteorologici italiani: 3B Meteo, Il Meteo, MeteoAM e Meteo.it. Previsioni affidabili per tutte le città d'Italia.",
+  description: "Confronta le previsioni del tempo dai principali provider meteorologici italiani: 3B Meteo, Il Meteo e MeteoAM. Previsioni affidabili per tutte le città d'Italia.",
   keywords: "meteo, previsioni, tempo, Italia, 3B Meteo, Il Meteo, MeteoAM, confronto",
   authors: [{ name: "Meteo Italia" }],
   creator: "Meteo Italia",

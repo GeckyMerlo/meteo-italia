@@ -448,29 +448,6 @@ const HomePage = () => {
           });
         }
         
-        // Aggiungi altri provider con dati mock per ora (escluso MeteoAM che è già implementato)
-        const mockProviders = [
-          { name: 'Meteo.it', logo: '☀️', color: 'purple' }
-        ];
-        
-        mockProviders.forEach(provider => {
-          weatherData.push({
-            provider: provider.name,
-            providerLogo: provider.logo,
-            city: selectedCity,
-            day: selectedDay,
-            maxTemp: (15 + Math.floor(Math.random() * 15)).toString(),
-            minTemp: (5 + Math.floor(Math.random() * 10)).toString(),
-            weatherDescription: 'Dati non disponibili',
-            wind: `${10 + Math.floor(Math.random() * 20)} km/h`,
-            humidity: `${40 + Math.floor(Math.random() * 40)}%`,
-            reliability: 'media',
-            status: 'unavailable',
-            message: 'Implementazione in corso',
-            lastUpdated: new Date().toISOString()
-          });
-        });
-        
         setWeatherData(weatherData);
       } catch (err) {
         console.error('Fetch error:', err);
@@ -499,15 +476,6 @@ const HomePage = () => {
           {
             provider: 'MeteoAM',
             providerLogo: '⛅',
-            city: selectedCity,
-            day: selectedDay,
-            status: 'error',
-            message: 'Errore nel caricamento dati',
-            lastUpdated: new Date().toISOString()
-          },
-          {
-            provider: 'Meteo.it',
-            providerLogo: '☀️',
             city: selectedCity,
             day: selectedDay,
             status: 'error',
@@ -553,7 +521,7 @@ const HomePage = () => {
 
       {/* Provider badges */}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
-            {['3B Meteo', 'Il Meteo', 'MeteoAM', 'Meteo.it'].map((provider) => (
+            {['3B Meteo', 'Il Meteo', 'MeteoAM'].map((provider) => (
               <span 
                 key={provider}
                 className="inline-flex items-center px-4 py-2 rounded-full text-xs font-semibold bg-orange-100 dark:bg-gray-800/80 text-orange-800 dark:text-gray-300 backdrop-blur-sm border-2 border-orange-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all duration-200"
