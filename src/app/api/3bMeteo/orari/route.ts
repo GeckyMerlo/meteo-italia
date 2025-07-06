@@ -22,9 +22,11 @@ export async function GET(request: NextRequest) {
     
     // Determina se è il giorno corrente o un giorno futuro
     const isCurrentDay = day === '0' || day.toLowerCase() === 'oggi';
-    const currentHour = new Date().getHours();
-    
-    console.log(`Is current day: ${isCurrentDay}, current hour: ${currentHour}`);
+    // Usa ora italiana
+    const now = new Date();
+    const currentHour = parseInt(now.toLocaleString('it-IT', { hour: '2-digit', hour12: false, timeZone: 'Europe/Rome' }), 10);
+
+    console.log(`Is current day: ${isCurrentDay}, current hour (Europe/Rome): ${currentHour}`);
     
     // Costruisci l'URL per 3B Meteo nel formato /città/numero
     const dayNumber = parseInt(day);
@@ -330,6 +332,10 @@ export async function GET(request: NextRequest) {
       return timeA - timeB;
     });
     
+    // DEBUG: stampa tutte le ore trovate e l'ora attuale italiana
+    console.log('DEBUG - Tutte le ore trovate:', uniqueData.map(d => d.time));
+    console.log('DEBUG - Ora attuale italiana (Europe/Rome):', currentHour);
+    
     // Se abbiamo dati validi, processali in base al tipo di giorno
     if (sortedData.length > 0) {
       let finalData = sortedData;
@@ -339,13 +345,22 @@ export async function GET(request: NextRequest) {
         console.log('Processing future day - showing only real data available');
         finalData = sortedData;
         console.log(`Future day: returning ${finalData.length} real hourly entries`);
-        
       } else {
-        // Per il giorno corrente, usa solo i dati disponibili dall'ora attuale in poi
-        console.log(`Current day - showing hours from ${currentHour}:00 onwards`);
+        // Per il giorno corrente, usa solo i dati disponibili dall'ora attuale in poi (inclusi minuti)
+        // Calcola orario attuale in formato HH:mm
+        const nowRome = new Date().toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Rome' });
+        const [currentHourStr, currentMinuteStr] = nowRome.split(':');
+        const currentHourMinute = parseInt(currentHourStr, 10) * 60 + parseInt(currentMinuteStr, 10);
+        console.log(`Current day - showing hours from ${nowRome} onwards (minuti inclusi)`);
         finalData = sortedData.filter(item => {
-          const itemHour = parseInt(item.time.split(':')[0]);
-          return itemHour >= currentHour;
+          const [itemHourStr, itemMinuteStr] = item.time.split(':');
+          const itemHour = parseInt(itemHourStr);
+          const itemMinute = parseInt(itemMinuteStr);
+          const nowMinute = parseInt(now.toLocaleString('it-IT', { minute: '2-digit', timeZone: 'Europe/Rome' }), 10);
+          // DEBUG: logga ogni confronto
+          const isAfter = itemHour > currentHour || (itemHour === currentHour && itemMinute >= nowMinute);
+          console.log(`DEBUG - Ora card: ${item.time} (${itemHour}:${itemMinute}) >= ${currentHour}:${nowMinute} ?`, isAfter);
+          return isAfter;
         });
         console.log(`Current day filtered to ${finalData.length} hours`);
       }
