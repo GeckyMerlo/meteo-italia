@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Configurazione per Vercel
+export const runtime = 'nodejs';
+export const maxDuration = 30; // 30 secondi per Vercel Pro, 10 per free tier
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const cityName = searchParams.get("city");
@@ -16,7 +20,19 @@ export async function GET(request: NextRequest) {
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1`;
     console.log("🌍 Getting coordinates from Nominatim...");
     
-    const nominatimResponse = await fetch(nominatimUrl);
+    const nominatimResponse = await fetch(nominatimUrl, {
+      headers: {
+        'User-Agent': 'Meteo-Italia/1.0 (https://meteo-italia.vercel.app)',
+        'Accept': 'application/json',
+      },
+      // Timeout di 10 secondi per Nominatim
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (!nominatimResponse.ok) {
+      throw new Error(`Nominatim API error: ${nominatimResponse.status}`);
+    }
+    
     const nominatimData = await nominatimResponse.json();
     
     if (!nominatimData || nominatimData.length === 0) {
@@ -34,7 +50,21 @@ export async function GET(request: NextRequest) {
     const meteoamUrl = `https://api.meteoam.it/deda-ows/api/GetStationRadius/${lat}/${lon}`;
     console.log("🌡️ Fetching MeteoAM station data...");
     
-    const meteoamResponse = await fetch(meteoamUrl);
+    const meteoamResponse = await fetch(meteoamUrl, {
+      headers: {
+        'User-Agent': 'Meteo-Italia/1.0 (https://meteo-italia.vercel.app)',
+        'Accept': 'application/json',
+        'Origin': 'https://meteo-italia.vercel.app',
+        'Referer': 'https://meteo-italia.vercel.app/',
+      },
+      // Timeout di 15 secondi per MeteoAM
+      signal: AbortSignal.timeout(15000)
+    });
+    
+    if (!meteoamResponse.ok) {
+      throw new Error(`MeteoAM API error: ${meteoamResponse.status} - ${meteoamResponse.statusText}`);
+    }
+    
     const meteoamData = await meteoamResponse.json();
     
     if (!meteoamData || !meteoamData.pointlist || meteoamData.pointlist.length === 0) {
@@ -242,6 +272,24 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     console.error("❌ Error fetching MeteoAM hourly data:", error);
+    
+    // Gestione specifica degli errori
+    if (error instanceof TypeError && error.message.includes('AbortError')) {
+      return NextResponse.json({ 
+        error: "Request timeout - MeteoAM API non risponde",
+        provider: "meteoam",
+        hourlyData: []
+      }, { status: 408 });
+    }
+    
+    if (error instanceof Error && error.message.includes('API error')) {
+      return NextResponse.json({ 
+        error: "MeteoAM API temporaneamente non disponibile",
+        provider: "meteoam",
+        hourlyData: []
+      }, { status: 503 });
+    }
+    
     return NextResponse.json({ 
       error: "Failed to fetch hourly weather data",
       provider: "meteoam",

@@ -1,5 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Configurazione per Vercel
+export const runtime = 'nodejs';
+export const maxDuration = 30; // 30 secondi per Vercel Pro, 10 per free tier
+
+// Utility per retry con backoff esponenziale
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      
+      // Se non è l'ultimo tentativo e l'errore è temporaneo, riprova
+      if (i < maxRetries - 1 && (response.status >= 500 || response.status === 408)) {
+        const delay = Math.min(1000 * Math.pow(2, i), 5000); // Max 5 secondi di delay
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      
+      const delay = Math.min(1000 * Math.pow(2, i), 5000);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const cityName = searchParams.get("cityName");
@@ -15,7 +45,19 @@ export async function GET(request: NextRequest) {
     // 1. Ottieni coordinate da Nominatim
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1`;
     
-    const nominatimResponse = await fetch(nominatimUrl);
+    const nominatimResponse = await fetchWithRetry(nominatimUrl, {
+      headers: {
+        'User-Agent': 'Meteo-Italia/1.0 (https://meteo-italia.vercel.app)',
+        'Accept': 'application/json',
+      },
+      // Timeout di 10 secondi per Nominatim
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (!nominatimResponse.ok) {
+      throw new Error(`Nominatim API error: ${nominatimResponse.status}`);
+    }
+    
     const nominatimData = await nominatimResponse.json();
     
     if (!nominatimData || nominatimData.length === 0) {
@@ -29,7 +71,21 @@ export async function GET(request: NextRequest) {
     // 2. Ottieni dati MeteoAM
     const meteoamUrl = `https://api.meteoam.it/deda-ows/api/GetStationRadius/${lat}/${lon}`;
     
-    const meteoamResponse = await fetch(meteoamUrl);
+    const meteoamResponse = await fetchWithRetry(meteoamUrl, {
+      headers: {
+        'User-Agent': 'Meteo-Italia/1.0 (https://meteo-italia.vercel.app)',
+        'Accept': 'application/json',
+        'Origin': 'https://meteo-italia.vercel.app',
+        'Referer': 'https://meteo-italia.vercel.app/',
+      },
+      // Timeout di 15 secondi per MeteoAM
+      signal: AbortSignal.timeout(15000)
+    });
+    
+    if (!meteoamResponse.ok) {
+      throw new Error(`MeteoAM API error: ${meteoamResponse.status} - ${meteoamResponse.statusText}`);
+    }
+    
     const meteoamData = await meteoamResponse.json();
     
     if (!meteoamData || !meteoamData.pointlist || meteoamData.pointlist.length === 0) {
@@ -138,7 +194,7 @@ export async function GET(request: NextRequest) {
     console.log(`[MeteoAM] Final condition: ${condition}, distance: ${distance.toFixed(2)}km, isForecast: ${isForecastDay}`);
     
     // 4. Restituisci dati semplificati per la weather card
-    return NextResponse.json({
+    const response = NextResponse.json({
       location: cityName,
       coordinates: { lat: parseFloat(lat), lon: parseFloat(lon) },
       station: {
@@ -162,8 +218,33 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
     
+    // Aggiungi header CORS
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    return response;
+    
   } catch (error) {
     console.error(`[MeteoAM] Error fetching weather card data for ${cityName}:`, error);
+    
+    // Gestione specifica degli errori
+    if (error instanceof TypeError && error.message.includes('AbortError')) {
+      return NextResponse.json({ 
+        error: "Request timeout - MeteoAM API non risponde",
+        details: "Timeout della richiesta",
+        location: cityName
+      }, { status: 408 });
+    }
+    
+    if (error instanceof Error && error.message.includes('API error')) {
+      return NextResponse.json({ 
+        error: "MeteoAM API temporaneamente non disponibile",
+        details: error.message,
+        location: cityName
+      }, { status: 503 });
+    }
+    
     return NextResponse.json({ 
       error: "Failed to fetch weather data",
       details: error instanceof Error ? error.message : 'Unknown error',
