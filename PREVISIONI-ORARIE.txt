@@ -1,0 +1,227 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║              🕐 PREVISIONI ORARIE - GUIDA COMPLETA 🕐               ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+✨ NOVITÀ: Previsioni orarie dettagliate per ogni giorno!
+
+═══════════════════════════════════════════════════════════════════════
+
+📊 COSA È STATO AGGIUNTO:
+
+✅ Previsioni ORARIE per oggi e i prossimi 7 giorni
+✅ Dati dettagliati ora per ora
+✅ Visualizzazione interattiva in un modal elegante
+✅ Funziona con tutte e 3 le API
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 COME USARE:
+
+1. Apri index.html nel browser
+2. Seleziona una città italiana
+3. Scegli il giorno (oggi, domani, o +giorni)
+4. Clicca su UNA QUALSIASI delle 3 card meteo
+5. Si aprirà un popup con le previsioni ORARIE!
+
+═══════════════════════════════════════════════════════════════════════
+
+📈 DATI ORARI DISPONIBILI:
+
+Ogni ora mostra:
+
+🕐 Ora (formato 24h)
+🌡️ Temperatura
+💧 Umidità (%)
+💨 Velocità vento (km/h)
+☔ Probabilità pioggia (%)
+🌧️ Precipitazioni previste (mm)
+🌤️ Condizioni meteo (icona + descrizione)
+
+═══════════════════════════════════════════════════════════════════════
+
+🔵 OPEN-METEO GFS - Dati Orari:
+
+✓ Previsioni ogni ORA (24 ore al giorno)
+✓ Temperature precise ora per ora
+✓ Umidità relativa
+✓ Probabilità e quantità precipitazioni
+✓ Vento: velocità e direzione
+✓ Condizioni meteo dettagliate
+
+Esempio:
+- 00:00 → 15°C, 70%, 5km/h, ☁️ Nuvoloso
+- 01:00 → 14°C, 72%, 6km/h, ☁️ Nuvoloso
+- 02:00 → 14°C, 74%, 5km/h, 🌧️ Pioggia leggera
+...fino alle 23:00
+
+═══════════════════════════════════════════════════════════════════════
+
+🟢 OPEN-METEO ECMWF - Dati Orari:
+
+✓ Previsioni ogni ORA
+✓ Modello europeo più preciso
+✓ Temperature ora per ora
+✓ Velocità vento
+✓ Condizioni meteo
+
+Nota: ECMWF non include umidità e precipitazioni nei dati orari,
+      ma è più accurato nelle temperature!
+
+═══════════════════════════════════════════════════════════════════════
+
+🟣 WTTR.IN - Dati Orari:
+
+✓ Previsioni ogni 3 ORE (8 slot al giorno)
+✓ Temperature
+✓ Umidità
+✓ Probabilità pioggia
+✓ Precipitazioni
+✓ Vento con direzione
+✓ Descrizioni dettagliate in italiano
+
+Orari: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00
+
+═══════════════════════════════════════════════════════════════════════
+
+💡 CONFRONTO TRA API:
+
+┌─────────────────┬──────────┬─────────────┬──────────────────────┐
+│ API             │ Frequenza│ Parametri   │ Caratteristiche      │
+├─────────────────┼──────────┼─────────────┼──────────────────────┤
+│ Open-Meteo GFS  │ 1 ora    │ Completi    │ Più dettagliato      │
+│ Open-Meteo ECMWF│ 1 ora    │ Essenziali  │ Più preciso          │
+│ wttr.in         │ 3 ore    │ Completi    │ Con descrizioni IT   │
+└─────────────────┴──────────┴─────────────┴──────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════
+
+🎨 INTERFACCIA PREVISIONI ORARIE:
+
+Le previsioni orarie sono mostrate in un modal moderno:
+
+• Layout a griglia responsive
+• Ogni ora in una card separata
+• Animazioni smooth al passaggio del mouse
+• Scroll automatico se ci sono molte ore
+• Icone meteo intuitive
+• Colori che seguono il tema chiaro/scuro
+
+═══════════════════════════════════════════════════════════════════════
+
+📱 RESPONSIVE DESIGN:
+
+Desktop:
+→ Griglia 6-7 colonne
+→ Card più grandi
+→ Tutti i dettagli visibili
+
+Tablet:
+→ Griglia 4-5 colonne
+→ Card medie
+→ Ottimizzato per touch
+
+Mobile:
+→ Griglia 2-3 colonne
+→ Card compatte
+→ Facile scorrimento verticale
+
+═══════════════════════════════════════════════════════════════════════
+
+🔍 ESEMPI DI UTILIZZO:
+
+1. Pianificare una giornata:
+   - Clicca su "Oggi"
+   - Apri previsioni orarie
+   - Vedi quando pioverà e quanto
+
+2. Organizzare un viaggio:
+   - Seleziona "+3giorni"
+   - Confronta le 3 API
+   - Controlla le temperature ora per ora
+
+3. Attività sportive:
+   - Cerca la tua città
+   - Scegli il giorno
+   - Verifica vento e temperatura nelle ore che ti interessano
+
+═══════════════════════════════════════════════════════════════════════
+
+⚡ PRESTAZIONI:
+
+• Caricamento veloce: Dati orari caricati insieme ai dati giornalieri
+• Nessuna chiamata API extra
+• Modal responsive e fluido
+• Animazioni hardware-accelerated
+
+═══════════════════════════════════════════════════════════════════════
+
+🎯 FUNZIONALITÀ AVANZATE:
+
+✓ Auto-scroll nel modal
+✓ Chiusura con ESC o click fuori
+✓ Animazioni smooth
+✓ Icone meteo dinamiche
+✓ Colori tema-aware (chiaro/scuro)
+✓ Dati aggiornati in tempo reale
+
+═══════════════════════════════════════════════════════════════════════
+
+📝 NOTE TECNICHE:
+
+• Open-Meteo GFS: 168 ore (7 giorni × 24 ore)
+• Open-Meteo ECMWF: 168 ore (7 giorni × 24 ore)
+• wttr.in: 24 ore per 3 giorni (oltre usa fallback)
+
+• Tutti i dati sono in fuso orario Europe/Rome
+• Temperature in Celsius
+• Vento in km/h
+• Precipitazioni in mm
+
+═══════════════════════════════════════════════════════════════════════
+
+❓ FAQ:
+
+Q: Perché wttr.in mostra solo 8 ore invece di 24?
+A: wttr.in fornisce dati ogni 3 ore (è comunque molto accurato!)
+
+Q: Quale API è più precisa per le previsioni orarie?
+A: ECMWF per le temperature, GFS per precipitazioni dettagliate
+
+Q: Posso stampare le previsioni orarie?
+A: Sì! Il browser può stampare il contenuto del modal
+
+Q: Funziona offline?
+A: No, richiede connessione internet per caricare i dati
+
+═══════════════════════════════════════════════════════════════════════
+
+🚀 COME FUNZIONA DIETRO LE QUINTE:
+
+1. Quando carichi la pagina, l'app richiede:
+   - Dati giornalieri (min/max)
+   - Dati orari (tutte le ore)
+
+2. I dati orari vengono salvati in memoria
+
+3. Quando clicchi su una card:
+   - Si apre il modal
+   - Vengono mostrati i dati orari già caricati
+   - Nessun tempo di attesa!
+
+4. Ogni API fornisce i dati nel suo formato:
+   - L'app li normalizza per una visualizzazione uniforme
+
+═══════════════════════════════════════════════════════════════════════
+
+✨ PROVA SUBITO!
+
+1. Apri index.html
+2. Seleziona "Roma" (o qualsiasi città)
+3. Scegli "Oggi"
+4. Clicca sulla prima card (Open-Meteo GFS)
+5. Ammira le previsioni orarie! 🌤️
+
+═══════════════════════════════════════════════════════════════════════
+
+Ultimo aggiornamento: 29 ottobre 2025
+Feature: Previsioni orarie complete per tutte le API
