@@ -22,6 +22,7 @@ Confronta previsioni meteo da 3 API diverse con previsioni orarie!
 ✓ Dati REALI e aggiornati
 ✓ Previsioni giornaliere fino a 7 giorni
 ✓ Previsioni ORARIE dettagliate
+✓ ICONE METEO INTELLIGENTI (consenso tra 3 API!) 🆕
 ✓ Tutte le città italiane
 ✓ Dark mode / Light mode
 ✓ Interfaccia moderna e responsive
@@ -77,7 +78,7 @@ Previsioni Orarie (click sulla card):
 
 ═══════════════════════════════════════════════════════════════
 
-� COME USARE:
+💡 COME USARE:
 
 CONFRONTARE PREVISIONI:
 1. Seleziona una città
@@ -90,6 +91,14 @@ VEDERE PREVISIONI ORARIE:
 2. Si apre un modal con le ore
 3. Scorri per vedere tutte le ore
 4. Chiudi con X o cliccando fuori
+
+ICONE METEO INTELLIGENTI: 🆕
+1. Guarda la barra dei 7 giorni in alto
+2. Le icone mostrano il CONSENSO tra le 3 API
+3. Passa il mouse per vedere dettagli:
+   - Condizione prevista
+   - Quante API concordano (es. "2/3 API prevedono")
+4. Priorità al maltempo (meglio essere preparati!)
 
 CAMBIARE TEMA:
 - Clicca sul bottone 🌙/☀️ in basso a destra
@@ -113,6 +122,7 @@ CAMBIARE TEMA:
 • styles.css - Stili e animazioni
 • README.txt - Questo file
 • PREVISIONI-ORARIE.txt - Guida dettagliata previsioni orarie
+• ICONE-CONSENSO.txt - Come funzionano le icone intelligenti 🆕
 
 ═══════════════════════════════════════════════════════════════
 
@@ -214,11 +224,12 @@ Non affiliato con i servizi meteorologici ufficiali.
 
 🎉 BUON UTILIZZO!
 
-Per informazioni dettagliate sulle previsioni orarie,
-leggi PREVISIONI-ORARIE.txt
+Per informazioni dettagliate:
+• Previsioni orarie → PREVISIONI-ORARIE.txt
+• Icone con consenso API → ICONE-CONSENSO.txt 🆕
 
 ═══════════════════════════════════════════════════════════════
 
-Versione: 2.0
+Versione: 2.1
 Data: 29 ottobre 2025
-Features: 3 API meteo + Previsioni orarie complete
+Features: 3 API meteo + Previsioni orarie + Icone intelligenti

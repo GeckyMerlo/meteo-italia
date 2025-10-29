@@ -398,6 +398,37 @@ body {
 .day-icon {
     font-size: 1.5rem;
     margin: 0.5rem 0;
+    position: relative;
+    cursor: help;
+    transition: transform 0.2s ease;
+}
+
+.day-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Tooltip per icone consenso API */
+.day-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    padding: 0.5rem 0.75rem;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    font-size: 0.7rem;
+    border-radius: 0.5rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1000;
+}
+
+.day-icon:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px);
 }
 
 .day-date {

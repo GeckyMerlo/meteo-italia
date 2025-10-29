@@ -4,6 +4,7 @@ let selectedDay = 'oggi';
 let italianCities = [];
 let isDarkMode = false;
 let currentWeatherData = []; // Store weather data with hourly forecasts
+let timelineWeatherData = {}; // Store weather data for each day in timeline
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
@@ -70,6 +71,7 @@ function setupEventListeners() {
 }
 
 // Handle search form submit
+// Handle search form submit
 function handleSearchSubmit(e) {
     e.preventDefault();
     const cityInput = document.getElementById('cityInput');
@@ -79,6 +81,21 @@ function handleSearchSubmit(e) {
         selectedCity = city;
         updateSelectedCityDisplay();
         hideSuggestions();
+        
+        // Ricarica dati timeline con nuova città
+        loadTimelineWeatherData().then(() => {
+            // Aggiorna icone timeline
+            for (let i = 0; i < 7; i++) {
+                const iconElement = document.getElementById(`day-icon-${i}`);
+                if (iconElement) {
+                    const iconData = getWeatherIcon(i);
+                    iconElement.textContent = iconData.icon;
+                    iconElement.setAttribute('data-tooltip', iconData.tooltip);
+                    iconElement.setAttribute('title', iconData.tooltip);
+                }
+            }
+        });
+        
         fetchWeatherData();
     }
 }
@@ -146,10 +163,14 @@ function updateSelectedCityDisplay() {
 }
 
 // Initialize day timeline
-function initializeDayTimeline() {
+// Initialize day timeline with weather icons
+async function initializeDayTimeline() {
     const timeline = document.getElementById('dayTimeline');
     const today = new Date();
     const days = [];
+    
+    // Carica dati meteo per tutti i giorni
+    await loadTimelineWeatherData();
     
     for (let i = 0; i < 7; i++) {
         const date = new Date(today);
@@ -182,22 +203,161 @@ function initializeDayTimeline() {
         });
     }
     
-    timeline.innerHTML = days.map((day, index) => `
+    timeline.innerHTML = days.map((day, index) => {
+        const iconData = getWeatherIcon(index);
+        return `
         <button class="day-button ${day.value === selectedDay ? 'active' : ''}" 
                 onclick="selectDay('${day.value}', '${day.label}', '${day.date}')">
             <div class="day-label">${day.label}</div>
-            <div class="day-icon">${getWeatherIcon(index)}</div>
+            <div class="day-icon" id="day-icon-${index}" data-tooltip="${iconData.tooltip}" title="${iconData.tooltip}">${iconData.icon}</div>
             <div class="day-date">${day.date}</div>
         </button>
-    `).join('');
+        `;
+    }).join('');
     
     updateSelectedDayDisplay(days[0].label, days[0].date);
 }
 
-// Get weather icon for timeline
-function getWeatherIcon(index) {
-    const icons = ['☀️', '⛅', '🌤️', '☁️', '🌦️', '🌧️', '⛈️'];
-    return icons[index % icons.length];
+// Load weather data for timeline icons (all 7 days)
+async function loadTimelineWeatherData() {
+    try {
+        // Fetch weather data for all 7 days from all APIs
+        const promises = [];
+        
+        for (let day = 0; day < 7; day++) {
+            promises.push(
+                Promise.all([
+                    fetchOpenMeteoGFS(selectedCity, day).catch(() => null),
+                    fetchOpenMeteoECMWF(selectedCity, day).catch(() => null),
+                    fetchWttrIn(selectedCity, day).catch(() => null)
+                ]).then(data => ({ day, data: data.filter(d => d !== null) }))
+            );
+        }
+        
+        const results = await Promise.all(promises);
+        
+        // Store in global object
+        timelineWeatherData = {};
+        results.forEach(result => {
+            timelineWeatherData[result.day] = result.data;
+        });
+        
+    } catch (error) {
+        console.error('Error loading timeline weather data:', error);
+        // Usa icone di fallback se caricamento fallisce
+    }
+}
+
+// Get weather icon for timeline based on API consensus
+function getWeatherIcon(dayIndex) {
+    // Fallback icons se dati non ancora caricati
+    const fallbackIcons = ['☀️', '⛅', '🌤️', '☁️', '🌦️', '🌧️', '⛈️'];
+    
+    const dayData = timelineWeatherData[dayIndex];
+    if (!dayData || dayData.length === 0) {
+        return {
+            icon: fallbackIcons[dayIndex % fallbackIcons.length],
+            tooltip: 'Caricamento dati in corso...'
+        };
+    }
+    
+    // Estrai weatherCode o descrizioni da tutte le API disponibili
+    const weatherCodes = [];
+    const apiNames = [];
+    
+    dayData.forEach(apiData => {
+        if (apiData.status === 'success') {
+            apiNames.push(apiData.provider);
+            
+            // Estrai weather code dalla descrizione o altri dati
+            const description = apiData.weatherDescription?.toLowerCase() || '';
+            
+            // Categorizza basandosi sulla descrizione
+            if (description.includes('temporale') || description.includes('tstorm') || description.includes('thunder')) {
+                weatherCodes.push('thunderstorm');
+            } else if (description.includes('neve') || description.includes('snow')) {
+                weatherCodes.push('snow');
+            } else if (description.includes('pioggia forte') || description.includes('rovesci')) {
+                weatherCodes.push('heavy-rain');
+            } else if (description.includes('pioggia') || description.includes('rain') || description.includes('pioviggine')) {
+                weatherCodes.push('rain');
+            } else if (description.includes('nuvoloso') || description.includes('cloud') || description.includes('coperto')) {
+                weatherCodes.push('cloudy');
+            } else if (description.includes('parzialmente') || description.includes('partly')) {
+                weatherCodes.push('partly-cloudy');
+            } else if (description.includes('sereno') || description.includes('clear') || description.includes('sole')) {
+                weatherCodes.push('clear');
+            } else {
+                weatherCodes.push('partly-cloudy'); // default
+            }
+        }
+    });
+    
+    if (weatherCodes.length === 0) {
+        return {
+            icon: fallbackIcons[dayIndex % fallbackIcons.length],
+            tooltip: 'Nessun dato disponibile'
+        };
+    }
+    
+    // Algoritmo di consenso: priorità alle condizioni peggiori
+    const priority = {
+        'thunderstorm': 7,
+        'snow': 6,
+        'heavy-rain': 5,
+        'rain': 4,
+        'cloudy': 3,
+        'partly-cloudy': 2,
+        'clear': 1
+    };
+    
+    const conditionNames = {
+        'thunderstorm': 'Temporale',
+        'snow': 'Neve',
+        'heavy-rain': 'Pioggia forte',
+        'rain': 'Pioggia',
+        'cloudy': 'Nuvoloso',
+        'partly-cloudy': 'Parzialmente nuvoloso',
+        'clear': 'Sereno'
+    };
+    
+    // Trova la condizione più grave tra le API
+    let maxPriority = 0;
+    let dominantCondition = 'clear';
+    
+    weatherCodes.forEach(code => {
+        if (priority[code] > maxPriority) {
+            maxPriority = priority[code];
+            dominantCondition = code;
+        }
+    });
+    
+    // Conta quante API concordano
+    const agreementCount = weatherCodes.filter(c => c === dominantCondition).length;
+    const totalAPIs = weatherCodes.length;
+    
+    // Mappa condizioni a icone
+    const iconMap = {
+        'thunderstorm': '⛈️',
+        'snow': '🌨️',
+        'heavy-rain': '🌧️',
+        'rain': '🌦️',
+        'cloudy': '☁️',
+        'partly-cloudy': '⛅',
+        'clear': '☀️'
+    };
+    
+    // Crea tooltip con informazioni consenso
+    const consensusInfo = agreementCount === totalAPIs 
+        ? `Tutte le ${totalAPIs} API concordano` 
+        : `${agreementCount}/${totalAPIs} API prevedono`;
+    
+    const tooltip = `${conditionNames[dominantCondition]} • ${consensusInfo}`;
+    
+    return {
+        icon: iconMap[dominantCondition] || '🌤️',
+        tooltip: tooltip
+    };
 }
 
 // Select a day

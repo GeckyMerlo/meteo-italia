@@ -1,0 +1,239 @@
+╔══════════════════════════════════════════════════════════════╗
+║        🌦️ ICONE METEO CON CONSENSO API 🌦️                  ║
+╚══════════════════════════════════════════════════════════════╝
+
+✨ NUOVA FUNZIONALITÀ IMPLEMENTATA!
+
+═══════════════════════════════════════════════════════════════
+
+📊 COME FUNZIONA:
+
+Le icone meteo nella barra della timeline (i 7 giorni in alto) 
+ora mostrano previsioni REALI basate sul CONSENSO delle 3 API!
+
+Prima: Icone fisse decorative
+Dopo:  Icone DINAMICHE basate su dati reali
+
+═══════════════════════════════════════════════════════════════
+
+🔍 ALGORITMO DI CONSENSO:
+
+1. RACCOLTA DATI
+   - All'avvio, il sistema carica le previsioni di TUTTI i 7 giorni
+   - Per ogni giorno, interroga le 3 API in parallelo:
+     • Open-Meteo GFS
+     • Open-Meteo ECMWF  
+     • wttr.in
+
+2. ANALISI CONDIZIONI
+   - Ogni API fornisce una descrizione meteo
+   - Il sistema categorizza in 7 condizioni:
+     ⛈️ Temporale (priorità massima)
+     🌨️ Neve
+     🌧️ Pioggia forte
+     🌦️ Pioggia
+     ☁️ Nuvoloso
+     ⛅ Parzialmente nuvoloso
+     ☀️ Sereno (priorità minima)
+
+3. DECISIONE FINALE
+   - Si sceglie la condizione PIÙ GRAVE tra le 3 API
+   - Esempio: se 2 API dicono "Sereno" e 1 dice "Pioggia"
+     → L'icona mostrata sarà 🌦️ Pioggia
+   
+   Perché? È meglio essere preparati per maltempo!
+
+═══════════════════════════════════════════════════════════════
+
+💡 TOOLTIP INFORMATIVO:
+
+Passa il mouse (hover) su un'icona per vedere:
+
+✓ Condizione meteo prevista
+✓ Quante API concordano
+✓ Livello di consenso
+
+Esempi tooltip:
+• "Sereno • Tutte le 3 API concordano" ✅
+• "Pioggia • 2/3 API prevedono" ⚠️
+• "Temporale • 1/3 API prevedono" ⚡
+
+═══════════════════════════════════════════════════════════════
+
+🔄 AGGIORNAMENTO AUTOMATICO:
+
+Le icone si aggiornano automaticamente quando:
+
+1. Cambi città (nuova ricerca)
+   → Ricarica tutte le previsioni per la nuova località
+
+2. All'avvio dell'app
+   → Carica previsioni per la città predefinita (Roma)
+
+═══════════════════════════════════════════════════════════════
+
+🎯 VANTAGGI:
+
+✅ Previsioni più affidabili
+   → Confronto automatico tra 3 fonti diverse
+
+✅ Visione rapida
+   → Vedi subito il meteo della settimana senza click
+
+✅ Trasparenza
+   → I tooltip mostrano il livello di accordo tra le API
+
+✅ Aggiornamento in tempo reale
+   → Dati sempre freschi dalle API
+
+═══════════════════════════════════════════════════════════════
+
+🔧 DETTAGLI TECNICI:
+
+PRIORITÀ CONDIZIONI (da peggiore a migliore):
+1. Temporale (peso: 7)
+2. Neve (peso: 6)
+3. Pioggia forte (peso: 5)
+4. Pioggia (peso: 4)
+5. Nuvoloso (peso: 3)
+6. Parzialmente nuvoloso (peso: 2)
+7. Sereno (peso: 1)
+
+MATCHING KEYWORDS:
+- Temporale: "temporale", "tstorm", "thunder"
+- Neve: "neve", "snow"
+- Pioggia forte: "pioggia forte", "rovesci"
+- Pioggia: "pioggia", "rain", "pioviggine"
+- Nuvoloso: "nuvoloso", "cloud", "coperto"
+- Parzialmente nuvoloso: "parzialmente", "partly"
+- Sereno: "sereno", "clear", "sole"
+
+═══════════════════════════════════════════════════════════════
+
+📱 RESPONSIVE:
+
+✓ Desktop: Tooltip visibile al passaggio mouse
+✓ Mobile: Tooltip visibile con tap lungo (title attribute)
+✓ Icone scalabili: Si ingrandiscono al passaggio del mouse
+
+═══════════════════════════════════════════════════════════════
+
+🎨 STILE VISIVO:
+
+• Icone emoji colorate e chiare
+• Animazione hover: scale(1.1)
+• Tooltip con sfondo scuro semi-trasparente
+• Font piccolo ma leggibile nel tooltip
+• Posizionamento sopra l'icona
+
+═══════════════════════════════════════════════════════════════
+
+⚡ PRESTAZIONI:
+
+• Caricamento parallelo: tutte le API in contemporanea
+• Caching: dati salvati in memoria (timelineWeatherData)
+• Fallback: icone decorative se dati non disponibili
+• Errori gestiti: nessun crash se API non risponde
+
+═══════════════════════════════════════════════════════════════
+
+🔮 ESEMPI DI CONSENSO:
+
+SCENARIO 1: Pieno accordo
+─────────────────────────
+GFS:    "Sereno"         → ☀️
+ECMWF:  "Sereno"         → ☀️
+wttr.in: "Sereno"        → ☀️
+━━━━━━━━━━━━━━━━━━━━━━━━━
+RISULTATO: ☀️ Sereno • Tutte le 3 API concordano
+
+
+SCENARIO 2: Maggioranza
+─────────────────────────
+GFS:    "Parzialmente nuvoloso" → ⛅
+ECMWF:  "Nuvoloso"              → ☁️
+wttr.in: "Nuvoloso"             → ☁️
+━━━━━━━━━━━━━━━━━━━━━━━━━
+RISULTATO: ☁️ Nuvoloso • 2/3 API prevedono
+
+
+SCENARIO 3: Disaccordo (priorità maltempo)
+─────────────────────────
+GFS:    "Sereno"         → ☀️
+ECMWF:  "Sereno"         → ☀️
+wttr.in: "Pioggia"       → 🌦️
+━━━━━━━━━━━━━━━━━━━━━━━━━
+RISULTATO: 🌦️ Pioggia • 1/3 API prevedono
+(Si mostra maltempo per prudenza!)
+
+
+SCENARIO 4: Condizioni gravi
+─────────────────────────
+GFS:    "Pioggia"        → 🌦️
+ECMWF:  "Temporale"      → ⛈️
+wttr.in: "Nuvoloso"      → ☁️
+━━━━━━━━━━━━━━━━━━━━━━━━━
+RISULTATO: ⛈️ Temporale • 1/3 API prevedono
+(Temporale ha priorità massima!)
+
+═══════════════════════════════════════════════════════════════
+
+📚 CODICE MODIFICATO:
+
+FILE: app.js
+━━━━━━━━━━━━━━━━━━━━━━━━━
+• Aggiunta variabile globale: timelineWeatherData
+• Nuova funzione: loadTimelineWeatherData()
+• Modificata: getWeatherIcon() 
+  → Ora restituisce { icon, tooltip }
+• Modificata: handleSearchSubmit()
+  → Aggiorna icone quando cambia città
+• Modificata: initializeDayTimeline()
+  → Carica dati all'avvio
+
+FILE: styles.css
+━━━━━━━━━━━━━━━━━━━━━━━━━
+• Aggiunto: .day-icon:hover { transform: scale(1.1) }
+• Aggiunto: .day-icon::after (tooltip CSS)
+• Aggiunto: cursor: help sull'icona
+
+═══════════════════════════════════════════════════════════════
+
+🚀 COME TESTARE:
+
+1. Apri index.html nel browser
+2. Aspetta qualche secondo (caricamento dati)
+3. Guarda le icone dei 7 giorni in alto
+4. Passa il mouse su un'icona
+5. Leggi il tooltip che appare
+6. Prova a cambiare città
+7. Nota come le icone cambiano!
+
+═══════════════════════════════════════════════════════════════
+
+📊 CONFRONTO PRIMA/DOPO:
+
+PRIMA:
+└─ Icone fisse: ☀️ ⛅ 🌤️ ☁️ 🌦️ 🌧️ ⛈️
+   (sempre le stesse, solo decorative)
+
+DOPO:
+└─ Icone dinamiche basate su consenso API reale!
+   (cambiano in base a dati meteorologici veri)
+
+═══════════════════════════════════════════════════════════════
+
+✨ ESPERIENZA UTENTE:
+
+• Più informativo: dati reali al primo sguardo
+• Più affidabile: consenso tra 3 fonti
+• Più interattivo: tooltip con dettagli
+• Più intelligente: priorità al maltempo
+
+═══════════════════════════════════════════════════════════════
+
+Versione: 2.1
+Feature: Icone Timeline con Consenso API
+Data: 29 ottobre 2025
+
+═══════════════════════════════════════════════════════════════
