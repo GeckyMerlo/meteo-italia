@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meteo Italia - Confronta Previsioni</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="main-container">
+        <div class="container">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <!-- Logo -->
+                    <div class="logo-container">
+                        <img src="public/images/logo.png" alt="Logo" class="logo">
+                    </div>
+
+                    <!-- Title -->
+                    <div class="title-section">
+                        <h1 class="main-title">Meteo Italia</h1>
+                        <p class="subtitle">Confronta le previsioni da diverse API meteorologiche</p>
+                    </div>
+                </div>
+
+                <!-- Provider badges -->
+                <div class="provider-badges">
+                    <span class="badge">Open-Meteo GFS</span>
+                    <span class="badge">Open-Meteo ECMWF</span>
+                    <span class="badge">wttr.in</span>
+                </div>
+            </header>
+            
+            <!-- Search Bar -->
+            <div class="search-section">
+                <form id="searchForm" class="search-form">
+                    <div class="search-input-container">
+                        <div class="search-icon">🔍</div>
+                        <input
+                            type="text"
+                            id="cityInput"
+                            placeholder="Cerca una città italiana (es. Roma, Milano...)"
+                            class="search-input"
+                            autocomplete="off"
+                        />
+                        
+                        <!-- Suggestions dropdown -->
+                        <div id="suggestions" class="suggestions-dropdown hidden"></div>
+                    </div>
+                    
+                    <button type="submit" class="search-button">Cerca</button>
+                </form>
+                
+                <!-- Current city display -->
+                <div class="current-city">
+                    <span class="city-badge">
+                        <span class="city-icon">📍</span>
+                        Città selezionata: <span id="selectedCityDisplay">Roma</span>
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Day Timeline -->
+            <div class="timeline-section">
+                <h2 class="timeline-title">Seleziona il giorno</h2>
+                
+                <div class="timeline-container">
+                    <div class="timeline-scroll" id="dayTimeline">
+                        <!-- Days will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Current selection info -->
+                <div class="selection-info">
+                    <p class="selection-text">
+                        <span class="selection-label">Previsioni per:</span>
+                        <span class="selection-value" id="selectedDayLabel">Oggi</span>
+                        <span class="selection-date" id="selectedDayDate"></span>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Weather Cards Grid -->
+            <div class="weather-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        Previsioni per <span id="cityName">Roma</span> - <span id="dayName">oggi</span>
+                    </h2>
+                    <div id="loadingIndicator" class="loading-indicator hidden">
+                        <div class="spinner"></div>
+                        Caricamento...
+                    </div>
+                </div>
+                
+                <!-- Error message -->
+                <div id="errorMessage" class="error-container hidden">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-content">
+                        <h3 class="error-title">Errore nel caricamento</h3>
+                        <p class="error-text" id="errorText"></p>
+                        <button id="retryButton" class="retry-button">Riprova</button>
+                    </div>
+                </div>
+                
+                <!-- Weather cards -->
+                <div id="weatherCards" class="weather-grid">
+                    <!-- Cards will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <div class="footer-content">
+                    <div class="footer-info">
+                        <span class="footer-star">🌟</span>
+                        <span>Non affiliato con i provider meteorologici ufficiali.</span>
+                    </div>
+                    <div class="footer-tech">
+                        <span class="tech-badge">
+                            <span>⚡</span>
+                            <span>HTML5</span>
+                        </span>
+                        <span class="tech-badge">
+                            <span>🎨</span>
+                            <span>Pure CSS</span>
+                        </span>
+                        <span class="tech-badge">
+                            <span>🚀</span>
+                            <span>Vanilla JavaScript</span>
+                        </span>
+                    </div>
+                    <div class="footer-copyright">
+                        <p>© 2025 Meteo Italia - Progetto dimostrativo per confrontare previsioni meteorologiche</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </main>
+
+    <!-- Weather Details Modal -->
+    <div id="weatherModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Dettagli Meteo</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Details will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Switcher -->
+    <button id="themeSwitcher" class="theme-switcher" aria-label="Toggle dark mode">
+        <span class="theme-icon">🌙</span>
+    </button>
+
+    <script src="app.js"></script>
+</body>
+</html>
