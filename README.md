@@ -231,6 +231,8 @@ Non affiliato con i servizi meteorologici ufficiali.
 
 **GeckyMerlo**
 - GitHub: [@GeckyMerlo](https://github.com/GeckyMerlo)
+**Oscuro03**
+- GitHub: [@Oscuro03](https://github.com/Oscuro03)
 
 ---
 
